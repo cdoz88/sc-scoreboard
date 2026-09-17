@@ -89,7 +89,7 @@ export const FantasyMatchupDetails: React.FC<Props> = ({ league, matchups, roste
 
   return (
     <div className="max-w-4xl mx-auto pb-16 sm:pb-24">
-      <div className="sticky top-0 z-10 bg-[#121212] pt-0 pb-4 flex justify-between items-center">
+      <div className="sticky top-0 z-10 bg-transparent pt-0 pb-4 flex justify-between items-center">
         <div className="flex items-center gap-2">
           <button 
             onClick={onBack}

@@ -67,7 +67,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
 
       return (
         <div className="max-w-4xl mx-auto pb-16 sm:pb-24">
-          <div className="sticky top-0 z-10 bg-[#121212] pt-0 pb-2">
+          <div className="sticky top-0 z-10 bg-transparent pt-0 pb-2">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <button 
@@ -148,7 +148,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
 
     return (
       <div className="max-w-4xl mx-auto pb-16 sm:pb-24">
-        <div className="sticky top-0 z-10 bg-[#121212] pt-0 pb-2">
+        <div className="sticky top-0 z-10 bg-transparent pt-0 pb-2">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <button 
@@ -252,7 +252,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
   return (
     <div className="max-w-4xl mx-auto pb-16 sm:pb-24">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-[#121212] pt-0 pb-2">
+      <div className="sticky top-0 z-10 bg-transparent pt-0 pb-2">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <button 
