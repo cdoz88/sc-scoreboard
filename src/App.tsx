@@ -42,7 +42,7 @@ export default function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="min-h-screen bg-transparent text-gray-200 selection:bg-[#9df01c] selection:text-black">
+      <div className="min-h-screen bg-transparent text-gray-200 selection:bg-[#9df01c] selection:text-black no-scrollbar overflow-y-auto">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24">
           <header className="flex flex-col items-center mb-4">
             <SegmentedControl
