@@ -32,19 +32,65 @@ export async function fetchScoreboard(leagueId: string, date: string): Promise<G
   if (!league) return [];
 
   const url = `${API_BASE}${league.endpoint}?dates=${date.replace(/-/g, '')}`;
-  const response = await fetch(url);
-  const data = await response.json();
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 3500);
+    const response = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeout);
 
-  return (data.events || []).map((event: any) => {
-    const competition = event.competitions?.[0];
-    if (!competition) return null;
-    
-    // Handle Golf (PGA) differently as it doesn't have away/home teams
-    if (leagueId === 'PGA') {
-      const competitors = competition.competitors || [];
-      const sortedCompetitors = competitors
-        .sort((a: any, b: any) => (a.order || 999) - (b.order || 999));
-        
+    if (!response.ok) return [];
+    const data = await response.json();
+
+    return (data.events || []).map((event: any) => {
+      const competition = event.competitions?.[0];
+      if (!competition) return null;
+      
+      // Handle Golf (PGA) differently as it doesn't have away/home teams
+      if (leagueId === 'PGA') {
+        const competitors = competition.competitors || [];
+        const sortedCompetitors = competitors
+          .sort((a: any, b: any) => (a.order || 999) - (b.order || 999));
+          
+        return {
+          id: event.id,
+          league: leagueId,
+          name: event.name,
+          shortName: event.shortName,
+          date: event.date,
+          status: {
+            state: competition.status.type.state,
+            detail: competition.status.type.detail,
+            clock: competition.status.clock,
+            period: competition.status.period,
+          },
+          // For golf, we'll store all competitors in a special field
+          // and provide dummy away/home teams to satisfy the type
+          golfCompetitors: sortedCompetitors,
+          awayTeam: {
+            id: 'golf-dummy-1',
+            name: 'Golf',
+            abbreviation: 'GLF',
+            displayName: 'Golf',
+            logo: '',
+          },
+          homeTeam: {
+            id: 'golf-dummy-2',
+            name: 'Golf',
+            abbreviation: 'GLF',
+            displayName: 'Golf',
+            logo: '',
+          },
+          lastPlay: competition.situation?.lastPlay?.text,
+          odds: competition.odds || [],
+          broadcasts: competition.broadcasts || competition.geoBroadcasts || [],
+        };
+      }
+      
+      const away = competition.competitors?.find((c: any) => c.homeAway === 'away');
+      const home = competition.competitors?.find((c: any) => c.homeAway === 'home');
+
+      if (!away || !home) return null;
+
       return {
         id: event.id,
         league: leagueId,
@@ -57,69 +103,33 @@ export async function fetchScoreboard(leagueId: string, date: string): Promise<G
           clock: competition.status.clock,
           period: competition.status.period,
         },
-        // For golf, we'll store all competitors in a special field
-        // and provide dummy away/home teams to satisfy the type
-        golfCompetitors: sortedCompetitors,
         awayTeam: {
-          id: 'golf-dummy-1',
-          name: 'Golf',
-          abbreviation: 'GLF',
-          displayName: 'Golf',
-          logo: '',
+          id: away.team.id,
+          name: away.team.name,
+          abbreviation: away.team.abbreviation,
+          displayName: away.team.displayName,
+          logo: getTeamLogo(away.team),
+          score: away.score,
+          record: away.records?.find((r: any) => r.type === 'total')?.summary,
         },
         homeTeam: {
-          id: 'golf-dummy-2',
-          name: 'Golf',
-          abbreviation: 'GLF',
-          displayName: 'Golf',
-          logo: '',
+          id: home.team.id,
+          name: home.team.name,
+          abbreviation: home.team.abbreviation,
+          displayName: home.team.displayName,
+          logo: getTeamLogo(home.team),
+          score: home.score,
+          record: home.records?.find((r: any) => r.type === 'total')?.summary,
         },
         lastPlay: competition.situation?.lastPlay?.text,
         odds: competition.odds || [],
         broadcasts: competition.broadcasts || competition.geoBroadcasts || [],
       };
-    }
-    
-    const away = competition.competitors?.find((c: any) => c.homeAway === 'away');
-    const home = competition.competitors?.find((c: any) => c.homeAway === 'home');
-
-    if (!away || !home) return null;
-
-    return {
-      id: event.id,
-      league: leagueId,
-      name: event.name,
-      shortName: event.shortName,
-      date: event.date,
-      status: {
-        state: competition.status.type.state,
-        detail: competition.status.type.detail,
-        clock: competition.status.clock,
-        period: competition.status.period,
-      },
-      awayTeam: {
-        id: away.team.id,
-        name: away.team.name,
-        abbreviation: away.team.abbreviation,
-        displayName: away.team.displayName,
-        logo: getTeamLogo(away.team),
-        score: away.score,
-        record: away.records?.find((r: any) => r.type === 'total')?.summary,
-      },
-      homeTeam: {
-        id: home.team.id,
-        name: home.team.name,
-        abbreviation: home.team.abbreviation,
-        displayName: home.team.displayName,
-        logo: getTeamLogo(home.team),
-        score: home.score,
-        record: home.records?.find((r: any) => r.type === 'total')?.summary,
-      },
-      lastPlay: competition.situation?.lastPlay?.text,
-      odds: competition.odds || [],
-      broadcasts: competition.broadcasts || competition.geoBroadcasts || [],
-    };
-  }).filter((g): g is Game => g !== null);
+    }).filter((g): g is Game => g !== null);
+  } catch (err) {
+    console.warn(`[Scoreboard] Error fetching ${leagueId}:`, err);
+    return [];
+  }
 }
 
 export async function fetchGameSummary(leagueId: string, gameId: string, date?: string) {

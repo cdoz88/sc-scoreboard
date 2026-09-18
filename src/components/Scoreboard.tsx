@@ -76,11 +76,19 @@ export const Scoreboard = ({
         leaguesToFetch = [selectedLeague];
       }
       
-      const results = await Promise.all(
+      const settled = await Promise.allSettled(
         leaguesToFetch.map(id => fetchScoreboard(id, format(date, 'yyyyMMdd')))
       );
-      return results.flat();
+      const results: Game[] = [];
+      for (const res of settled) {
+        if (res.status === 'fulfilled' && Array.isArray(res.value)) {
+          results.push(...res.value);
+        }
+      }
+      return results;
     },
+    staleTime: 1000 * 45,
+    refetchOnWindowFocus: false,
   });
 
   const groupedGames = useMemo(() => {

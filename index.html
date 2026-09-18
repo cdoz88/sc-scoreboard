@@ -42,7 +42,7 @@
         background-color: transparent !important;
       }
     </style>
-    <!-- Configure iframe-resizer BEFORE loading script so sizeWidth is strictly disabled -->
+    <!-- Configure iframe-resizer with high-performance bodyOffset calculation and disabled sizeWidth -->
     <script>
       window.iFrameResizer = {
         targetOrigin: '*',
@@ -50,10 +50,10 @@
         checkOrigin: false,
         scrolling: false,
         widthCalculationMethod: 'rightMostElement',
-        heightCalculationMethod: 'lowestElement'
+        heightCalculationMethod: 'bodyOffset'
       };
     </script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/iframe-resizer/4.3.9/iframeResizer.contentWindow.min.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/iframe-resizer/4.3.9/iframeResizer.contentWindow.min.js"></script>
   </head>
   <body class="no-scrollbar" style="background: transparent !important; background-color: transparent !important;">
     <div id="root"></div>

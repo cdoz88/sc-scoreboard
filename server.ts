@@ -5,6 +5,7 @@ import axios from "axios";
 import cors from "cors";
 import path from "path";
 import crypto from "crypto";
+import fs from "fs";
 
 async function startServer() {
   const app = express();
@@ -19,6 +20,76 @@ async function startServer() {
     next();
   });
   
+  // Persistent Sync Storage (Ensures mobile app and desktop never lose synced leagues)
+  const DATA_DIR = path.join(process.cwd(), 'data');
+  const SYNC_FILE = path.join(DATA_DIR, 'synced_leagues.json');
+
+  if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+  }
+
+  const readSyncData = () => {
+    try {
+      if (fs.existsSync(SYNC_FILE)) {
+        return JSON.parse(fs.readFileSync(SYNC_FILE, 'utf8'));
+      }
+    } catch (e) {
+      console.warn('[Sync API] Could not read sync file:', e);
+    }
+    return { leagues: [], users: {}, updatedAt: 0 };
+  };
+
+  const writeSyncData = (data: any) => {
+    try {
+      fs.writeFileSync(SYNC_FILE, JSON.stringify(data, null, 2), 'utf8');
+    } catch (e) {
+      console.error('[Sync API] Could not write sync file:', e);
+    }
+  };
+
+  app.get('/api/sync/leagues', (req, res) => {
+    const { userId } = req.query;
+    const syncData = readSyncData();
+
+    if (userId && typeof userId === 'string' && syncData.users?.[userId]) {
+      return res.json({ 
+        leagues: syncData.users[userId].leagues || [],
+        updatedAt: syncData.users[userId].updatedAt || 0
+      });
+    }
+
+    // Default to the latest synced leagues
+    res.json({
+      leagues: syncData.leagues || [],
+      updatedAt: syncData.updatedAt || 0
+    });
+  });
+
+  app.post('/api/sync/leagues', (req, res) => {
+    const { leagues, userId } = req.body;
+    if (!Array.isArray(leagues)) {
+      return res.status(400).json({ error: 'leagues must be an array' });
+    }
+
+    const syncData = readSyncData();
+    const now = Date.now();
+
+    syncData.leagues = leagues;
+    syncData.updatedAt = now;
+
+    if (userId && typeof userId === 'string') {
+      if (!syncData.users) syncData.users = {};
+      syncData.users[userId] = {
+        leagues,
+        updatedAt: now
+      };
+    }
+
+    writeSyncData(syncData);
+    console.log(`[Sync API] Persisted ${leagues.length} leagues (userId: ${userId || 'global'})`);
+    res.json({ success: true, count: leagues.length, updatedAt: now });
+  });
+
   // Set up session middleware for storing OAuth tokens
   app.use(session({
     secret: process.env.SESSION_SECRET || crypto.randomBytes(20).toString('hex'),
