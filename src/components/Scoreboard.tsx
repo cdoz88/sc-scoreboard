@@ -104,11 +104,11 @@ export const Scoreboard = ({
   }, [games]);
 
   return (
-    <div className="space-y-6">
-      <div className={`flex justify-between items-center gap-4 mb-8 ${isMobile ? 'flex-col w-full' : 'flex-col sm:flex-row'}`}>
+    <div className="space-y-4">
+      <div className="flex flex-col sm:flex-row justify-between items-center my-4 gap-4">
         {/* League and Sport Filters */}
-        <div className={`flex items-center gap-2 z-30 ${isMobile ? 'w-full' : 'w-full sm:w-auto'}`}>
-          <div className={`relative ${isMobile ? 'flex-1' : 'w-full sm:w-48'}`}>
+        <div className="flex items-center gap-3 w-full sm:w-auto z-30">
+          <div className="relative flex-1 sm:flex-initial sm:w-48">
             <Dropdown
               value={selectedSport}
               options={SPORT_OPTIONS}
@@ -116,7 +116,7 @@ export const Scoreboard = ({
             />
           </div>
 
-          <div className={`relative ${isMobile ? 'flex-1' : 'w-full sm:w-40'}`}>
+          <div className="relative flex-1 sm:flex-initial sm:w-40">
             <Dropdown
               value={selectedLeague}
               options={[
@@ -129,59 +129,60 @@ export const Scoreboard = ({
           </div>
         </div>
 
-        {/* Date Picker */}
-        <div className={`relative flex items-center gap-2 z-50 ${isMobile ? 'w-full justify-center' : 'w-full sm:w-auto justify-center sm:justify-end'}`} ref={calendarRef}>
+        {/* Date Navigation */}
+        <div className="flex items-center gap-2 w-full sm:w-auto justify-center sm:justify-end z-10">
           <button
             onClick={() => setDate(subDays(date, 1))}
-            className="p-2.5 bg-[#2c2c2c] hover:bg-[#374151] rounded-lg transition-colors text-gray-300"
+            className="bg-[#2c2c2c] hover:bg-[#374151] px-3 py-2 rounded-lg text-gray-300 transition-colors"
           >
             <ChevronLeft size={16} />
           </button>
           
-          <button
-            onClick={() => setIsCalendarOpen(!isCalendarOpen)}
-            className="flex items-center justify-between w-28 px-4 py-2.5 bg-[#2c2c2c] hover:bg-[#374151] rounded-lg transition-colors font-bold text-sm text-gray-200 uppercase tracking-wide"
-          >
-            <span className="w-full text-center">{isToday(date) ? 'TODAY' : format(date, 'MMM d')}</span>
-            <ChevronDown size={14} className="text-gray-400 ml-2" />
-          </button>
+          <div className="relative bg-[#2c2c2c] hover:bg-[#374151] rounded-lg group transition-colors flex items-center gap-2 px-4 py-2 cursor-pointer w-28 justify-between">
+            <div className="text-sm font-bold text-gray-200 uppercase tracking-wide truncate">
+              {isToday(date) ? 'TODAY' : format(date, 'MMM d')}
+            </div>
+            <ChevronDown size={14} className="text-gray-400 flex-shrink-0" />
+            <input
+              type="date"
+              value={format(date, 'yyyy-MM-dd')}
+              onChange={(e) => {
+                if (e.target.value) {
+                  const [y, m, d] = e.target.value.split('-').map(Number);
+                  setDate(new Date(y, m - 1, d, 12, 0, 0));
+                }
+              }}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+            />
+          </div>
 
           <button
             onClick={() => setDate(addDays(date, 1))}
-            className="p-2.5 bg-[#2c2c2c] hover:bg-[#374151] rounded-lg transition-colors text-gray-300"
+            className="bg-[#2c2c2c] hover:bg-[#374151] px-3 py-2 rounded-lg text-gray-300 transition-colors"
           >
             <ChevronRight size={16} />
           </button>
-
-          {isCalendarOpen && (
-            <CalendarPicker 
-              selectedDate={date} 
-              onSelect={setDate} 
-              onClose={() => setIsCalendarOpen(false)} 
-            />
-          )}
         </div>
       </div>
 
       {isLoading ? (
-        <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'}`}>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
           {[...Array(8)].map((_, i) => (
-            <div key={i} className="h-40 bg-gray-800/50 animate-pulse rounded-xl border border-gray-700/50" />
+            <div key={i} className="h-28 bg-[#2A2A2A] animate-pulse rounded-lg border border-gray-800" />
           ))}
         </div>
       ) : games?.length === 0 ? (
-        <div className="text-center py-20 bg-gray-800/30 rounded-2xl border border-dashed border-gray-700">
-          <p className="text-gray-500 font-bold uppercase tracking-widest">No games scheduled</p>
+        <div className="text-center py-16 card-bg rounded-lg border border-gray-800">
+          <p className="text-gray-400 font-bold uppercase tracking-widest text-sm">No games scheduled for this date</p>
         </div>
       ) : (
-        <div className="space-y-8">
+        <div className="space-y-6">
           {LEAGUES.filter(l => groupedGames[l.id]).map(league => (
-            <div key={league.id} className="space-y-4">
-              <div className="flex items-center gap-2 border-b border-gray-800 pb-2">
-                <div className="w-3 h-3 rounded-full bg-[#9df01c]" />
-                <h2 className="text-xl font-black uppercase tracking-widest">{league.name}</h2>
-              </div>
-              <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'}`}>
+            <div key={league.id} className="space-y-3">
+              <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight border-b-2 border-gray-700 pb-2 mb-2 uppercase flex items-center gap-2 font-oswald">
+                <span className="accent-text text-sm">●</span> {league.name}
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                 {groupedGames[league.id].map(game => (
                   <GameCard 
                     key={game.id} 

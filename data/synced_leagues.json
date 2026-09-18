@@ -1,1 +1,10 @@
-{"leagues":[],"users":{},"updatedAt":0}
+{
+  "leagues": [],
+  "users": {
+    "corey@fsan.com": {
+      "leagues": [],
+      "updatedAt": 1789758558376
+    }
+  },
+  "updatedAt": 1789758558376
+}

@@ -30,23 +30,30 @@ export const SegmentedControl = ({ activeTab, onTabChange, tabs }: SegmentedCont
   const activeIndex = tabs.findIndex(t => t.id === activeTab);
   
   return (
-    <div className="relative flex bg-gray-800/50 p-1 rounded-full w-full max-w-md mx-auto mb-6 border border-gray-700/50">
-      <div
-        className="absolute top-1 bottom-1 left-1 bg-[#9df01c] rounded-full transition-transform duration-300 ease-out"
-        style={{
-          width: `calc(${100 / tabs.length}% - 4px)`,
-          transform: `translateX(${activeIndex * 100}%)`,
-        }}
-      />
-      {tabs.map((tab) => (
-        <Tab
-          key={tab.id}
-          active={activeTab === tab.id}
-          onClick={() => onTabChange(tab.id)}
-        >
-          {tab.label}
-        </Tab>
-      ))}
+    <div className="flex justify-center mb-4 w-full">
+      <div className="relative flex flex-row bg-[#3e3e3e] p-1 rounded-full w-full max-w-[450px] select-none">
+        <div
+          className="absolute top-1 bottom-1 left-1 bg-[#9df01c] rounded-full transition-transform duration-300 ease-[cubic-bezier(0.4,0.0,0.2,1)]"
+          style={{
+            width: `calc(${100 / tabs.length}% - 3px)`,
+            transform: `translateX(${activeIndex * 100}%)`,
+          }}
+        />
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => onTabChange(tab.id)}
+            className={cn(
+              "flex-1 relative z-10 text-center cursor-pointer transition-colors duration-300 bg-transparent border-0 py-1.5 px-1 font-oswald text-[0.9rem] uppercase tracking-wide",
+              activeTab === tab.id
+                ? "text-[#1f2937] font-bold"
+                : "text-[#888] font-medium hover:text-gray-200"
+            )}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
     </div>
   );
 };

@@ -44,12 +44,12 @@ export const GameCard = ({ game, onClick }: GameCardProps) => {
     return (
       <div
         onClick={onClick}
-        className="bg-[#2A2A2A] rounded-xl border border-gray-800 hover:border-gray-600 transition-all duration-300 cursor-pointer overflow-hidden group flex flex-col h-full"
+        className="card-bg rounded-lg shadow-lg overflow-hidden cursor-pointer hover:scale-[1.02] transition-transform duration-300 flex flex-col justify-between h-full border border-gray-800 hover:border-gray-600"
       >
         <div className="p-3 flex flex-col h-full">
           <div className="flex justify-between items-start text-xs uppercase font-bold mb-2">
             <span className="text-gray-500">{game.league}</span>
-            <span className="text-[#9df01c] text-right">{game.status.detail}</span>
+            <span className="accent-text text-right">{game.status.detail}</span>
           </div>
           <div className="font-bold text-white text-base leading-tight mb-3">{eventName}</div>
           <div className="space-y-1.5">
@@ -68,64 +68,101 @@ export const GameCard = ({ game, onClick }: GameCardProps) => {
   const awaySpread = getTeamSpread(game.odds, game.awayTeam.abbreviation);
   const homeSpread = getTeamSpread(game.odds, game.homeTeam.abbreviation);
 
+  const statusText = isPre ? formatGameTime(game.date) : game.status.detail;
+  
+  let bottomText = '';
+  if (isPre) {
+    if (game.odds?.[0]?.overUnder) {
+      bottomText = `O/U ${game.odds[0].overUnder}`;
+    }
+  } else {
+    if (game.lastPlay) {
+      bottomText = game.lastPlay;
+    } else if (isPost) {
+      bottomText = "Final";
+    }
+  }
+
   return (
     <div
       onClick={onClick}
-      className="bg-[#2A2A2A] rounded-xl border border-gray-800 hover:border-gray-600 transition-all duration-300 cursor-pointer overflow-hidden group"
+      className="card-bg rounded-lg shadow-lg overflow-hidden cursor-pointer hover:scale-[1.02] transition-transform duration-300 flex flex-col justify-between h-full border border-gray-800 hover:border-gray-600"
     >
-      <div className="p-3 flex items-center justify-between">
-        <div className="space-y-2 flex-1">
-          <TeamRow team={game.awayTeam} isWinner={isPost && parseInt(game.awayTeam.score || '0') > parseInt(game.homeTeam.score || '0')} isPre={isPre} spread={awaySpread} />
-          <TeamRow team={game.homeTeam} isWinner={isPost && parseInt(game.homeTeam.score || '0') > parseInt(game.awayTeam.score || '0')} isPre={isPre} spread={homeSpread} />
+      <div className="p-2 flex items-center justify-between flex-grow">
+        <div className="flex flex-col gap-2 w-[65%]">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 min-w-0 pr-1">
+              <img
+                src={game.awayTeam.logo}
+                alt={game.awayTeam.name}
+                className="w-6 h-6 object-contain flex-shrink-0"
+                referrerPolicy="no-referrer"
+                onError={(e) => { e.currentTarget.src = `https://placehold.co/48x48/1f2937/ffffff?text=${game.awayTeam.abbreviation || '?'}`; }}
+              />
+              <span className={cn(
+                "font-bold text-sm truncate",
+                isPost && parseInt(game.awayTeam.score || '0') > parseInt(game.homeTeam.score || '0') ? "text-white" : "text-gray-200"
+              )}>
+                {game.awayTeam.abbreviation || game.awayTeam.name.substring(0, 3).toUpperCase()}
+              </span>
+            </div>
+            {isPre ? (
+              <span className="text-gray-500 font-bold text-sm text-right min-w-[3rem] flex-shrink-0">
+                {awaySpread || ''}
+              </span>
+            ) : (
+              <span className={cn(
+                "font-bold text-lg text-right min-w-[3rem] flex-shrink-0",
+                isPost && parseInt(game.awayTeam.score || '0') > parseInt(game.homeTeam.score || '0') ? "text-white" : "text-gray-200"
+              )}>
+                {game.awayTeam.score || '0'}
+              </span>
+            )}
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 min-w-0 pr-1">
+              <img
+                src={game.homeTeam.logo}
+                alt={game.homeTeam.name}
+                className="w-6 h-6 object-contain flex-shrink-0"
+                referrerPolicy="no-referrer"
+                onError={(e) => { e.currentTarget.src = `https://placehold.co/48x48/1f2937/ffffff?text=${game.homeTeam.abbreviation || '?'}`; }}
+              />
+              <span className={cn(
+                "font-bold text-sm truncate",
+                isPost && parseInt(game.homeTeam.score || '0') > parseInt(game.awayTeam.score || '0') ? "text-white" : "text-gray-200"
+              )}>
+                {game.homeTeam.abbreviation || game.homeTeam.name.substring(0, 3).toUpperCase()}
+              </span>
+            </div>
+            {isPre ? (
+              <span className="text-gray-500 font-bold text-sm text-right min-w-[3rem] flex-shrink-0">
+                {homeSpread || ''}
+              </span>
+            ) : (
+              <span className={cn(
+                "font-bold text-lg text-right min-w-[3rem] flex-shrink-0",
+                isPost && parseInt(game.homeTeam.score || '0') > parseInt(game.awayTeam.score || '0') ? "text-white" : "text-gray-200"
+              )}>
+                {game.homeTeam.score || '0'}
+              </span>
+            )}
+          </div>
         </div>
-        <div className="ml-4 flex flex-col items-end justify-center min-w-[60px]">
-          <span className={cn(
-            "text-xs font-bold uppercase tracking-widest text-right",
-            isLive ? "text-[#9df01c] animate-pulse" : isPre ? "text-[#9df01c]" : "text-gray-400"
-          )}>
-            {isPre ? formatGameTime(game.date) : game.status.detail}
+
+        <div className="w-[35%] flex justify-end pl-2">
+          <span className="accent-text font-bold text-xs uppercase text-right leading-tight break-words">
+            {statusText}
           </span>
         </div>
       </div>
 
-      {(game.lastPlay || (game.odds && game.odds.length > 0 && game.odds[0]?.overUnder)) && (
-        <div className="bg-[#252525] px-3 py-1.5 border-t border-gray-800">
-          <p className="text-[10px] text-gray-500 truncate uppercase tracking-tight">
-            {isPre && game.odds && game.odds.length > 0 && game.odds[0]?.overUnder 
-              ? `O/U ${game.odds[0].overUnder}` 
-              : game.lastPlay || (game.odds?.[0]?.overUnder ? `O/U ${game.odds[0].overUnder}` : '')}
-          </p>
+      {bottomText && (
+        <div className="border-t border-gray-700 px-3 py-1 bg-[#252525]">
+          <p className="text-xs text-gray-400 truncate">{bottomText}</p>
         </div>
       )}
     </div>
   );
 };
-
-const TeamRow = ({ team, isWinner, isPre, spread }: { team: any, isWinner: boolean, isPre: boolean, spread: string | null }) => (
-  <div className="flex items-center justify-between">
-    <div className="flex items-center gap-3">
-      <img src={team.logo} alt={team.name} className="w-6 h-6 object-contain" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.src = `https://placehold.co/48x48/1f2937/ffffff?text=${team.abbreviation || '?'}` }} />
-      <span className={cn(
-        "font-bold text-sm tracking-tight",
-        isWinner ? "text-white" : "text-gray-400"
-      )}>
-        {team.abbreviation}
-      </span>
-    </div>
-    <div className="flex items-center gap-3">
-      {spread && (
-        <span className="text-xs font-bold text-gray-500 w-12 text-right">
-          {spread}
-        </span>
-      )}
-      {!isPre && (
-        <span className={cn(
-          "font-black text-lg w-8 text-right",
-          isWinner ? "text-white" : "text-gray-500"
-        )}>
-          {team.score}
-        </span>
-      )}
-    </div>
-  </div>
-);

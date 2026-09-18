@@ -16,11 +16,26 @@ const PLATFORM_ICONS: Record<string, string> = {
 
 export const Fantasy = () => {
   const isMobile = useIsMobile();
-  const { syncedLeagues, syncLeague, addYahooLeague, removeLeague, isLoading, error } = useFantasy();
+  const { 
+    syncedLeagues, 
+    syncLeague, 
+    addYahooLeague, 
+    removeLeague, 
+    isLoading, 
+    error,
+    userAccount,
+    setUserAccount
+  } = useFantasy();
   const [username, setUsername] = useState('');
   const [isSyncing, setIsSyncing] = useState(false);
   const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
   const [selectedLeagueId, setSelectedLeagueId] = useState<string | null>(null);
+  const [editingAccount, setEditingAccount] = useState(false);
+  const [accountInput, setAccountInput] = useState(userAccount);
+
+  React.useEffect(() => {
+    setAccountInput(userAccount);
+  }, [userAccount]);
 
   const { matchupsData, isLoading: isMatchupsLoading, currentWeek, players } = useFantasyMatchups(syncedLeagues);
 
@@ -252,7 +267,46 @@ export const Fantasy = () => {
           </div>
 
           <div className="border-t border-gray-800 pt-6">
-            <h3 className="text-lg font-semibold mb-4">Manage Synced Leagues</h3>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+              <h3 className="text-lg font-semibold">Manage Synced Leagues</h3>
+              
+              <div className="flex items-center gap-2 text-xs bg-[#222] border border-gray-700 px-3 py-1.5 rounded-lg">
+                <span className="w-2 h-2 rounded-full bg-[#9df01c] animate-pulse"></span>
+                <span className="text-gray-400">Account:</span>
+                {editingAccount ? (
+                  <form 
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      setUserAccount(accountInput);
+                      setEditingAccount(false);
+                    }}
+                    className="flex items-center gap-1.5"
+                  >
+                    <input
+                      type="text"
+                      value={accountInput}
+                      onChange={(e) => setAccountInput(e.target.value)}
+                      className="bg-[#333] border border-gray-600 rounded px-2 py-0.5 text-white text-xs w-36 focus:outline-none focus:border-[#9df01c]"
+                      autoFocus
+                    />
+                    <button type="submit" className="text-[#9df01c] hover:underline font-bold">Save</button>
+                    <button type="button" onClick={() => { setAccountInput(userAccount); setEditingAccount(false); }} className="text-gray-400 hover:text-white">Cancel</button>
+                  </form>
+                ) : (
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-white font-medium">{userAccount}</span>
+                    <button 
+                      onClick={() => setEditingAccount(true)} 
+                      className="text-[#9df01c] hover:underline font-semibold"
+                      title="Click to change account for cross-device sync"
+                    >
+                      (Edit)
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+
             <div className="space-y-2">
               {syncedLeagues.map(league => (
                 <div key={league.league_id} className="flex items-center justify-between py-3 border-b border-gray-800/50">

@@ -48,14 +48,32 @@ async function startServer() {
   };
 
   app.get('/api/sync/leagues', (req, res) => {
-    const { userId } = req.query;
+    const rawUserId = req.query.userId || req.query.email || req.query.user;
     const syncData = readSyncData();
 
-    if (userId && typeof userId === 'string' && syncData.users?.[userId]) {
-      return res.json({ 
-        leagues: syncData.users[userId].leagues || [],
-        updatedAt: syncData.users[userId].updatedAt || 0
-      });
+    if (rawUserId && typeof rawUserId === 'string') {
+      const normalizedUser = rawUserId.trim().toLowerCase();
+      if (syncData.users?.[normalizedUser]) {
+        return res.json({ 
+          leagues: syncData.users[normalizedUser].leagues || [],
+          updatedAt: syncData.users[normalizedUser].updatedAt || 0,
+          userId: normalizedUser
+        });
+      }
+      // If user record doesn't exist yet but global leagues exist, provide global leagues as seed
+      if (syncData.leagues && syncData.leagues.length > 0) {
+        if (!syncData.users) syncData.users = {};
+        syncData.users[normalizedUser] = {
+          leagues: syncData.leagues,
+          updatedAt: syncData.updatedAt || Date.now()
+        };
+        writeSyncData(syncData);
+        return res.json({
+          leagues: syncData.leagues,
+          updatedAt: syncData.updatedAt || 0,
+          userId: normalizedUser
+        });
+      }
     }
 
     // Default to the latest synced leagues
@@ -66,28 +84,30 @@ async function startServer() {
   });
 
   app.post('/api/sync/leagues', (req, res) => {
-    const { leagues, userId } = req.body;
+    const { leagues, userId, email } = req.body;
     if (!Array.isArray(leagues)) {
       return res.status(400).json({ error: 'leagues must be an array' });
     }
 
     const syncData = readSyncData();
     const now = Date.now();
+    const targetUser = (userId || email || '').toString().trim().toLowerCase();
 
     syncData.leagues = leagues;
     syncData.updatedAt = now;
 
-    if (userId && typeof userId === 'string') {
-      if (!syncData.users) syncData.users = {};
-      syncData.users[userId] = {
+    if (!syncData.users) syncData.users = {};
+
+    if (targetUser) {
+      syncData.users[targetUser] = {
         leagues,
         updatedAt: now
       };
     }
 
     writeSyncData(syncData);
-    console.log(`[Sync API] Persisted ${leagues.length} leagues (userId: ${userId || 'global'})`);
-    res.json({ success: true, count: leagues.length, updatedAt: now });
+    console.log(`[Sync API] Persisted ${leagues.length} leagues (userId: ${targetUser || 'global'})`);
+    res.json({ success: true, count: leagues.length, updatedAt: now, userId: targetUser || 'global' });
   });
 
   // Set up session middleware for storing OAuth tokens

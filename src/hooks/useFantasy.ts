@@ -7,6 +7,7 @@ import { onAuthStateChanged, signInWithCustomToken, signInAnonymously } from 'fi
 
 const STORAGE_KEY = 'synced_leagues';
 const APP_ID = 'live-scores-widget';
+const DEFAULT_ACCOUNT = 'corey@fsan.com';
 
 export function useFantasy() {
   const [syncedLeagues, setSyncedLeagues] = useState<SleeperLeague[]>(() => {
@@ -19,84 +20,121 @@ export function useFantasy() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [userId, setUserId] = useState<string | null>(() => {
+
+  const [userAccount, setUserAccountState] = useState<string>(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
-      const urlId = params.get('userId') || params.get('uid');
-      if (urlId) {
+      const urlAccount = params.get('email') || params.get('user') || params.get('userId') || params.get('uid') || params.get('account');
+      if (urlAccount) {
         try {
-          localStorage.setItem('fsan_user_id', urlId);
+          localStorage.setItem('fsan_user_account', urlAccount.trim().toLowerCase());
         } catch {}
-        console.log('[Scoreboard Sync] Found userId in URL:', urlId);
-        return urlId;
+        console.log('[Scoreboard Sync] Found user account in URL:', urlAccount);
+        return urlAccount.trim().toLowerCase();
       }
       try {
-        const stored = localStorage.getItem('fsan_user_id');
+        const stored = localStorage.getItem('fsan_user_account') || localStorage.getItem('fsan_user_id');
         if (stored) {
-          console.log('[Scoreboard Sync] Found userId in localStorage:', stored);
-          return stored;
+          console.log('[Scoreboard Sync] Found user account in localStorage:', stored);
+          return stored.trim().toLowerCase();
         }
       } catch {}
     }
-    return null;
+    return DEFAULT_ACCOUNT;
   });
 
-  const activeUserIdRef = useRef<string | null>(userId);
-  activeUserIdRef.current = userId;
+  const accountRef = useRef<string>(userAccount);
+  accountRef.current = userAccount;
 
-  // 1. Initial load from persistent server storage (ensures mobile app & all devices have synced leagues on launch)
+  const syncedLeaguesRef = useRef<SleeperLeague[]>(syncedLeagues);
+  syncedLeaguesRef.current = syncedLeagues;
+
+  const lastUpdatedAtRef = useRef<number>(0);
+
+  // 1. Fetch leagues from persistent server storage for the specific user account
+  const fetchServerLeagues = useCallback(async (targetAccount: string) => {
+    try {
+      const query = `?userId=${encodeURIComponent(targetAccount)}`;
+      const res = await fetch(`/api/sync/leagues${query}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.leagues)) {
+          console.log(`[Scoreboard Sync] Retrieved ${data.leagues.length} leagues from persistent server store for ${targetAccount}`);
+          lastUpdatedAtRef.current = data.updatedAt || Date.now();
+          setSyncedLeagues(prev => {
+            // Overwrite if server has data or if local is empty
+            if (data.leagues.length > 0 || prev.length === 0) {
+              try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(data.leagues));
+              } catch {}
+              return data.leagues;
+            }
+            // If local has leagues but server is empty, upload local to server
+            if (prev.length > 0 && data.leagues.length === 0) {
+              fetch('/api/sync/leagues', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ leagues: prev, userId: targetAccount, email: targetAccount })
+              }).catch(() => {});
+            }
+            return prev;
+          });
+        }
+      }
+    } catch (err) {
+      console.warn('[Scoreboard Sync] Server leagues fetch note:', err);
+    }
+  }, []);
+
+  // Initial load
   useEffect(() => {
-    let isCancelled = false;
+    fetchServerLeagues(accountRef.current);
+  }, [fetchServerLeagues]);
 
-    const fetchServerLeagues = async () => {
+  // 2. Periodic background sync and focus sync (updates cross-device changes within seconds)
+  useEffect(() => {
+    const checkSync = async () => {
       try {
-        const query = activeUserIdRef.current ? `?userId=${encodeURIComponent(activeUserIdRef.current)}` : '';
+        const query = `?userId=${encodeURIComponent(accountRef.current)}`;
         const res = await fetch(`/api/sync/leagues${query}`);
         if (res.ok) {
           const data = await res.json();
-          if (Array.isArray(data.leagues) && !isCancelled) {
-            console.log(`[Scoreboard Sync] Retrieved ${data.leagues.length} leagues from persistent server store`);
-            setSyncedLeagues(prev => {
-              // Only overwrite if server has leagues, or if local is empty
-              if (data.leagues.length > 0 || prev.length === 0) {
-                try {
-                  localStorage.setItem(STORAGE_KEY, JSON.stringify(data.leagues));
-                } catch {}
-                return data.leagues;
-              }
-              // If local has leagues but server was empty (e.g. initial upload), save local to server
-              if (prev.length > 0 && data.leagues.length === 0) {
-                fetch('/api/sync/leagues', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ leagues: prev, userId: activeUserIdRef.current })
-                }).catch(() => {});
-              }
-              return prev;
-            });
+          if (Array.isArray(data.leagues) && data.updatedAt && data.updatedAt > lastUpdatedAtRef.current) {
+            console.log(`[Scoreboard Sync] Newer leagues received from cross-device sync (${data.leagues.length} leagues)`);
+            lastUpdatedAtRef.current = data.updatedAt;
+            setSyncedLeagues(data.leagues);
+            try {
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(data.leagues));
+            } catch {}
           }
         }
-      } catch (err) {
-        console.warn('[Scoreboard Sync] Server leagues fetch note:', err);
-      }
+      } catch {}
     };
 
-    fetchServerLeagues();
+    const interval = setInterval(checkSync, 10000); // Check every 10s
+    window.addEventListener('focus', checkSync);
+    document.addEventListener('visibilitychange', checkSync);
+
     return () => {
-      isCancelled = true;
+      clearInterval(interval);
+      window.removeEventListener('focus', checkSync);
+      document.removeEventListener('visibilitychange', checkSync);
     };
   }, []);
 
-  // 2. Listen for URL changes or postMessage
+  // 3. Listen for parent postMessage (e.g. wrapper app providing account or token)
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
-      if (event.data?.type === 'SET_USER_ID' && event.data?.userId) {
-        console.log('[Scoreboard Sync] Received SET_USER_ID via postMessage:', event.data.userId);
-        setUserId(event.data.userId);
-        activeUserIdRef.current = event.data.userId;
+      const incomingId = event.data?.userId || event.data?.email || event.data?.account;
+      if ((event.data?.type === 'SET_USER_ID' || event.data?.type === 'SET_USER_EMAIL') && incomingId) {
+        console.log('[Scoreboard Sync] Received account via postMessage:', incomingId);
+        const normalized = incomingId.trim().toLowerCase();
+        setUserAccountState(normalized);
+        accountRef.current = normalized;
         try {
-          localStorage.setItem('fsan_user_id', event.data.userId);
+          localStorage.setItem('fsan_user_account', normalized);
         } catch {}
+        fetchServerLeagues(normalized);
       }
       if (event.data?.type === 'SET_FIREBASE_TOKEN' && event.data?.token) {
         signInWithCustomToken(auth, event.data.token).catch(err => {
@@ -106,14 +144,13 @@ export function useFantasy() {
     };
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, []);
+  }, [fetchServerLeagues]);
 
-  // 3. Authenticate with Firebase (Fast anonymous auth without failing CORS calls)
+  // 4. Authenticate with Firebase
   useEffect(() => {
     let isMounted = true;
 
     const authenticate = async () => {
-      // Check if token passed in URL
       const params = new URLSearchParams(window.location.search);
       const urlToken = params.get('token') || params.get('firebaseToken');
       if (urlToken) {
@@ -126,7 +163,6 @@ export function useFantasy() {
         }
       }
 
-      // Fast anonymous fallback
       try {
         const cred = await signInAnonymously(auth);
         console.log('[Scoreboard Sync] Firebase connected for user:', cred.user.uid);
@@ -137,26 +173,16 @@ export function useFantasy() {
 
     authenticate();
 
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (!isMounted) return;
-      if (user) {
-        setUserId(prev => {
-          const finalId = prev || user.uid;
-          activeUserIdRef.current = finalId;
-          return finalId;
-        });
-      }
-    });
-
+    const unsubscribe = onAuthStateChanged(auth, () => {});
     return () => {
       isMounted = false;
       unsubscribe();
     };
   }, []);
 
-  // 4. Real-time sync with user's own Firestore document
+  // 5. Real-time sync with authenticated user's Firestore document
   useEffect(() => {
-    const currentUid = auth.currentUser?.uid || userId;
+    const currentUid = auth.currentUser?.uid;
     if (!currentUid) return;
 
     console.log('[Scoreboard Sync] Subscribing to Firestore updates for user:', currentUid);
@@ -165,11 +191,22 @@ export function useFantasy() {
       if (snap.exists()) {
         const data = snap.data();
         if (Array.isArray(data?.leagues)) {
-          console.log(`[Scoreboard Sync] Loaded ${data.leagues.length} leagues from Firestore (user: ${currentUid})`);
-          setSyncedLeagues(data.leagues);
-          try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(data.leagues));
-          } catch {}
+          if (data.leagues.length > 0) {
+            console.log(`[Scoreboard Sync] Loaded ${data.leagues.length} leagues from Firestore`);
+            lastUpdatedAtRef.current = data.updatedAt || Date.now();
+            setSyncedLeagues(data.leagues);
+            try {
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(data.leagues));
+            } catch {}
+          } else if (syncedLeaguesRef.current.length > 0) {
+            // Protect against empty wipe: seed Firestore with current local leagues
+            console.log('[Scoreboard Sync] Seeding Firestore document with local leagues');
+            setDoc(userDocRef, { 
+              leagues: syncedLeaguesRef.current, 
+              account: accountRef.current, 
+              updatedAt: Date.now() 
+            }).catch(() => {});
+          }
         }
       }
     }, (err) => {
@@ -177,36 +214,57 @@ export function useFantasy() {
     });
 
     return () => unsubscribe();
-  }, [userId]);
+  }, []);
 
   // Unified save function that updates both server persistent storage and user's Firestore document
   const saveLeagues = useCallback(async (leagues: SleeperLeague[]) => {
-    const currentUid = auth.currentUser?.uid || activeUserIdRef.current;
-    console.log('[Scoreboard Sync] Persisting', leagues.length, 'leagues...');
+    const currentAccount = accountRef.current;
+    console.log('[Scoreboard Sync] Persisting', leagues.length, 'leagues for', currentAccount);
+    lastUpdatedAtRef.current = Date.now();
 
-    // 1. Save to persistent server API (handles mobile app restarts and cross-device sync)
+    // 1. Save to persistent server API
     try {
       await fetch('/api/sync/leagues', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ leagues, userId: currentUid })
+        body: JSON.stringify({ 
+          leagues, 
+          userId: currentAccount, 
+          email: currentAccount 
+        })
       });
-      console.log('[Scoreboard Sync] Successfully saved to server store.');
+      console.log('[Scoreboard Sync] Successfully saved to server store for', currentAccount);
     } catch (e) {
       console.warn('[Scoreboard Sync] Server API sync warning:', e);
     }
 
-    // 2. Save to Firestore under the authenticated user's own document (valid per security rules)
+    // 2. Save to Firestore under authenticated user's doc
     if (auth.currentUser) {
       try {
         const userDocRef = doc(db, 'artifacts', APP_ID, 'users', auth.currentUser.uid);
-        await setDoc(userDocRef, { leagues, updatedAt: Date.now() });
+        await setDoc(userDocRef, { 
+          leagues, 
+          account: currentAccount, 
+          updatedAt: Date.now() 
+        });
         console.log('[Scoreboard Sync] Successfully saved to Firestore for user:', auth.currentUser.uid);
       } catch (err: any) {
         console.warn('[Scoreboard Sync] Firestore user doc save warning:', err.code, err.message);
       }
     }
   }, []);
+
+  const setUserAccount = useCallback((newAccount: string) => {
+    const trimmed = newAccount.trim().toLowerCase();
+    if (!trimmed) return;
+    console.log('[Scoreboard Sync] Switching user account to:', trimmed);
+    setUserAccountState(trimmed);
+    accountRef.current = trimmed;
+    try {
+      localStorage.setItem('fsan_user_account', trimmed);
+    } catch {}
+    fetchServerLeagues(trimmed);
+  }, [fetchServerLeagues]);
 
   const syncLeague = async (username: string) => {
     setIsLoading(true);
@@ -284,6 +342,7 @@ export function useFantasy() {
     removeLeague,
     isLoading,
     error,
-    userId
+    userAccount,
+    setUserAccount
   };
 }

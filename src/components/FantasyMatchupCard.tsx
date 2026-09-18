@@ -41,16 +41,16 @@ export const FantasyMatchupCard: React.FC<Props> = ({ league, matchups, rosters,
     <div 
       onClick={onClick}
       className={cn(
-        "bg-[#2A2A2A] rounded-lg shadow-lg overflow-hidden transition-all transform hover:scale-[1.02] duration-300 cursor-pointer p-3 border",
+        "card-bg rounded-lg shadow-lg overflow-hidden transition-all transform hover:scale-[1.02] duration-300 cursor-pointer p-3 border",
         isHighlighted ? "border-[#9df01c] border-2 shadow-[0_0_10px_rgba(157,240,28,0.2)]" : "border-gray-800 hover:border-gray-600"
       )}
     >
       <div className="flex justify-between items-center mb-3">
         <div className="flex items-center gap-2 overflow-hidden">
           <span className="text-xs font-bold text-gray-400 uppercase truncate max-w-[150px]">{league.name}</span>
-          <img src={platformIconUrl} className="w-4 h-4 object-contain flex-shrink-0" alt="Sleeper" />
+          <img src={platformIconUrl} className="w-4 h-4 object-contain flex-shrink-0" alt={league.platform || 'Sleeper'} />
         </div>
-        <span className="text-[#9df01c] text-xs font-bold uppercase flex-shrink-0">Week {week}</span>
+        <span className="accent-text text-xs font-bold uppercase flex-shrink-0">Week {week}</span>
       </div>
       <div className="space-y-3">
         <div className="flex items-center justify-between">
@@ -69,7 +69,7 @@ export const FantasyMatchupCard: React.FC<Props> = ({ league, matchups, rosters,
               <span className="font-bold text-sm text-gray-200 truncate">{team2Name}</span>
             </div>
           </div>
-          <span className="font-bold text-lg text-white">{opponentMatchup.points?.toFixed(2) || '0.00'}</span>
+          <span className="font-bold text-lg text-white">{opponentMatchup?.points ? opponentMatchup.points.toFixed(2) : '0.00'}</span>
         </div>
       </div>
     </div>
