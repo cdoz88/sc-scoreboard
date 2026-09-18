@@ -83,7 +83,34 @@ export function useFantasy() {
         }
       }
 
-      // 2. Sign in anonymously to establish a valid Firebase Auth session
+      // 2. Fetch custom token from generate-firebase-token.php on selloutcrowds.com
+      // (This was how the original FileZilla HTML synced users logged into selloutcrowds.com)
+      const tokenEndpoints = [
+        '/generate-firebase-token.php',
+        'https://www.selloutcrowds.com/generate-firebase-token.php',
+        'https://selloutcrowds.com/generate-firebase-token.php'
+      ];
+
+      for (const endpoint of tokenEndpoints) {
+        try {
+          const res = await fetch(endpoint, { credentials: 'include' });
+          if (res.ok) {
+            const text = await res.text();
+            if (text.trim().startsWith('{')) {
+              const data = JSON.parse(text);
+              if (data.token) {
+                console.log('[Scoreboard Sync] Retrieved token from', endpoint);
+                await signInWithCustomToken(auth, data.token);
+                return;
+              }
+            }
+          }
+        } catch (err) {
+          // Continue to next endpoint or anonymous fallback
+        }
+      }
+
+      // 3. Fallback to anonymous authentication
       try {
         const cred = await signInAnonymously(auth);
         console.log('[Scoreboard Sync] Firebase anonymous auth connected:', cred.user.uid);

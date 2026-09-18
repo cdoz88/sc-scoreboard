@@ -43,7 +43,7 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <div className="min-h-screen bg-transparent text-gray-200 selection:bg-[#9df01c] selection:text-black no-scrollbar overflow-y-auto">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24">
+        <div className="max-w-7xl mx-auto p-2 sm:p-4 pb-28 sm:pb-8">
           <header className="flex flex-col items-center mb-4">
             <SegmentedControl
               activeTab={activeTab}
@@ -93,30 +93,6 @@ export default function App() {
             </AnimatePresence>
           </main>
         </div>
-
-        {/* Bottom Navigation Bar (Mobile Only) */}
-        <nav className="fixed bottom-0 left-0 right-0 bg-[#1A1A1A]/80 backdrop-blur-xl border-t border-gray-800 px-6 py-4 flex justify-between items-center sm:hidden z-40">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => handleTabChange(tab.id)}
-              className={cn(
-                "flex flex-col items-center gap-1 transition-colors",
-                activeTab === tab.id ? "text-[#9df01c]" : "text-gray-500"
-              )}
-            >
-              <span className="text-[10px] font-black uppercase tracking-widest">
-                {tab.label}
-              </span>
-              {activeTab === tab.id && (
-                <motion.div
-                  layoutId="activeTabDot"
-                  className="w-1 h-1 bg-[#9df01c] rounded-full"
-                />
-              )}
-            </button>
-          ))}
-        </nav>
       </div>
     </QueryClientProvider>
   );
