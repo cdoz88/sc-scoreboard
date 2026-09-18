@@ -6,6 +6,7 @@ import { useFantasyMatchups } from '../hooks/useFantasyMatchups';
 import { FantasyMatchupCard } from './FantasyMatchupCard';
 import { FantasyMatchupDetails } from './FantasyMatchupDetails';
 import { FantasyTicker } from './FantasyTicker';
+import { useIsMobile } from '../hooks/useIsMobile';
 
 const PLATFORM_ICONS: Record<string, string> = {
   'Sleeper': 'https://play-lh.googleusercontent.com/JLW6o2Mmj5T4J0lGx5a3vRmwGILpWTweL8rmineEhIA9MZ_S-uMoqV4mzX19sIKPsVA',
@@ -14,7 +15,8 @@ const PLATFORM_ICONS: Record<string, string> = {
 };
 
 export const Fantasy = () => {
-  const { syncedLeagues, syncLeague, removeLeague, isLoading, error } = useFantasy();
+  const isMobile = useIsMobile();
+  const { syncedLeagues, syncLeague, addYahooLeague, removeLeague, isLoading, error } = useFantasy();
   const [username, setUsername] = useState('');
   const [isSyncing, setIsSyncing] = useState(false);
   const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
@@ -205,7 +207,7 @@ export const Fantasy = () => {
                   <p className="text-gray-500 font-bold uppercase tracking-widest">Loading Matchups...</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className={cn("grid gap-4", isMobile ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2")}>
                   {matchupsData?.map(data => (
                     <FantasyMatchupCard 
                       key={data.league.league_id}

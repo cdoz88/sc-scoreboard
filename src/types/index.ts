@@ -53,6 +53,7 @@ export interface SleeperLeague {
   total_rosters: number;
   avatar?: string;
   synced_user_id?: string;
+  platform?: string;
 }
 
 export interface SleeperMatchup {

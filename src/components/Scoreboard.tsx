@@ -8,6 +8,7 @@ import { CalendarPicker } from './CalendarPicker';
 import { Game } from '../types';
 import { Dropdown } from './Dropdown';
 import { AllSportsIcon, FootballIcon, BasketballIcon, BaseballIcon, HockeyIcon, GolfIcon, SoccerIcon } from './icons';
+import { useIsMobile } from '../hooks/useIsMobile';
 
 interface ScoreboardProps {
   onSelectGame: (id: string, league: string) => void;
@@ -38,6 +39,7 @@ export const Scoreboard = ({
   selectedLeague,
   setSelectedLeague
 }: ScoreboardProps) => {
+  const isMobile = useIsMobile();
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const calendarRef = useRef<HTMLDivElement>(null);
 
@@ -95,10 +97,10 @@ export const Scoreboard = ({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-8">
+      <div className={`flex justify-between items-center gap-4 mb-8 ${isMobile ? 'flex-col w-full' : 'flex-col sm:flex-row'}`}>
         {/* League and Sport Filters */}
-        <div className="flex items-center gap-2 w-full sm:w-auto z-30">
-          <div className="relative w-full sm:w-48">
+        <div className={`flex items-center gap-2 z-30 ${isMobile ? 'w-full' : 'w-full sm:w-auto'}`}>
+          <div className={`relative ${isMobile ? 'flex-1' : 'w-full sm:w-48'}`}>
             <Dropdown
               value={selectedSport}
               options={SPORT_OPTIONS}
@@ -106,7 +108,7 @@ export const Scoreboard = ({
             />
           </div>
 
-          <div className="relative w-full sm:w-40">
+          <div className={`relative ${isMobile ? 'flex-1' : 'w-full sm:w-40'}`}>
             <Dropdown
               value={selectedLeague}
               options={[
@@ -120,7 +122,7 @@ export const Scoreboard = ({
         </div>
 
         {/* Date Picker */}
-        <div className="relative flex items-center gap-2 w-full sm:w-auto justify-center sm:justify-end z-50" ref={calendarRef}>
+        <div className={`relative flex items-center gap-2 z-50 ${isMobile ? 'w-full justify-center' : 'w-full sm:w-auto justify-center sm:justify-end'}`} ref={calendarRef}>
           <button
             onClick={() => setDate(subDays(date, 1))}
             className="p-2.5 bg-[#2c2c2c] hover:bg-[#374151] rounded-lg transition-colors text-gray-300"
@@ -154,7 +156,7 @@ export const Scoreboard = ({
       </div>
 
       {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'}`}>
           {[...Array(8)].map((_, i) => (
             <div key={i} className="h-40 bg-gray-800/50 animate-pulse rounded-xl border border-gray-700/50" />
           ))}
@@ -171,7 +173,7 @@ export const Scoreboard = ({
                 <div className="w-3 h-3 rounded-full bg-[#9df01c]" />
                 <h2 className="text-xl font-black uppercase tracking-widest">{league.name}</h2>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'}`}>
                 {groupedGames[league.id].map(game => (
                   <GameCard 
                     key={game.id} 

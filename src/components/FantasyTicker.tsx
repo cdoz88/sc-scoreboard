@@ -171,9 +171,9 @@ export const FantasyTicker: React.FC<FantasyTickerProps> = ({
     let parts = [{ text, isHighlight: false }];
     
     // Sort names by length descending to match longer names first (e.g. "Amon-Ra St. Brown" before "Brown")
-    const sortedNames = Array.from(mySyncedPlayerNames).sort((a, b) => b.length - a.length);
+    const sortedNames = (Array.from(mySyncedPlayerNames) as string[]).sort((a, b) => b.length - a.length);
 
-    sortedNames.forEach(fullName => {
+    sortedNames.forEach((fullName: string) => {
       const escapedName = fullName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const regex = new RegExp(`(\\b${escapedName}\\b)`, 'gi');
       
