@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'motion/react';
 import { ChevronLeft, MapPin, Tv, Info, Users, List, RefreshCw, Cloud, Circle, Square, ArrowLeftRight, AlertCircle } from 'lucide-react';
+import Link from 'next/link';
 import { fetchGameSummary } from '../services/espnService';
 import { cn, getTeamLogo } from '../lib/utils';
 
@@ -15,10 +16,8 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
   const [activeTab, setActiveTab] = useState<'summary' | 'boxscore' | 'plays'>('summary');
   const [boxscoreTab, setBoxscoreTab] = useState<'team' | 'away' | 'home'>('team');
   const [hasSetDefaultTab, setHasSetDefaultTab] = useState(false);
-
   const queryClient = useQueryClient();
 
-  // Find the game in the scoreboard cache to get fallback data (odds, broadcasts, date)
   const scoreboardQueries = queryClient.getQueriesData({ queryKey: ['scoreboard'] });
   let fallbackGame: any = null;
   for (const [key, data] of scoreboardQueries) {
@@ -52,103 +51,103 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
-        <div className="w-12 h-12 border-4 border-[#9df01c] border-t-transparent rounded-full animate-spin" />
+        <div className="w-12 h-12 border-4 border-gray-400 border-t-transparent rounded-full animate-spin" />
         <p className="text-gray-400 font-bold uppercase tracking-widest animate-pulse">Loading Game Data...</p>
       </div>
     );
   }
 
-  if (!summary) {
-    if (leagueId === 'PGA' && fallbackGame && fallbackGame.golfCompetitors) {
-      // Use fallback game data to render the leaderboard
-      const eventName = fallbackGame.name || fallbackGame.shortName || 'Event Details';
-      const statusDetail = fallbackGame.status?.detail || 'Status Unavailable';
-      const sortedCompetitors = fallbackGame.golfCompetitors;
+  const header = summary?.header || fallbackGame;
+  const competition = header?.competitions?.[0] || fallbackGame;
 
-      return (
-        <div className="max-w-4xl mx-auto pb-16 sm:pb-24">
-          <div className="sticky top-0 z-10 bg-transparent pt-0 pb-2">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <button 
-                  onClick={onBack}
-                  className="p-2 bg-gray-800/50 hover:bg-gray-700 rounded-full transition-colors"
-                >
-                  <ChevronLeft size={20} />
-                </button>
-                <button 
-                  onClick={() => queryClient.invalidateQueries({ queryKey: ['gameSummary', leagueId, gameId] })}
-                  className="p-2 bg-gray-800/50 hover:bg-gray-700 rounded-full transition-colors"
-                >
-                  <RefreshCw size={20} className={cn("transition-transform", isFetching && "animate-spin")} />
-                </button>
-              </div>
-            </div>
-            <div className="mb-6 text-center">
-              <h2 className="text-xl sm:text-2xl font-bold text-white mb-1">{eventName}</h2>
-              <p className="text-sm font-normal text-[#9df01c] uppercase tracking-wider">{statusDetail}</p>
-            </div>
-          </div>
+  if (['PGA', 'NASCAR', 'F1'].includes(leagueId) && (competition?.competitors || fallbackGame?.golfCompetitors)) {
+    const isRacing = ['NASCAR', 'F1'].includes(leagueId);
+    
+    // FIX: Make sure the Header dynamically updates to the correct Session Name (e.g. "Practice 1")
+    let eventName = header?.shortName || header?.name || 'Event Details';
+    if (isRacing && competition?.type?.text) {
+        eventName = `${header?.shortName || header?.name} - ${competition.type.text}`;
+    } else if (isRacing && competition?.type?.abbreviation) {
+        eventName = `${header?.shortName || header?.name} (${competition.type.abbreviation})`;
+    }
 
-          <div className="overflow-x-auto rounded-lg border border-gray-700">
-            <table className="w-full text-sm text-left">
-              <thead className="text-xs text-gray-400 uppercase bg-[#333] border-b border-gray-600">
-                <tr>
-                  <th className="px-4 py-3 text-center">Rank</th>
-                  <th className="px-4 py-3">Athlete</th>
-                  <th className="px-4 py-3 text-right">Score</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-700 bg-[#2A2A2A]">
-                {sortedCompetitors.length === 0 ? (
-                  <tr>
-                    <td colSpan={3} className="p-4 text-center text-gray-400">Leaderboard data not available.</td>
-                  </tr>
-                ) : (
-                  sortedCompetitors.slice(0, 20).map((c: any, index: number) => {
-                    const rank = c.order || (index + 1);
-                    const name = c.athlete?.displayName || c.team?.displayName || 'Unknown';
-                    const score = c.score || c.statistics?.[0]?.displayValue || c.linescores?.[0]?.value || '-';
-                    const flagImg = c.athlete?.flag?.href ? (
-                      <img src={c.athlete.flag.href} className="w-4 h-3 inline-block mr-2" alt="flag" />
-                    ) : null;
-                    
-                    return (
-                      <tr key={index} className="border-b border-gray-700 hover:bg-[#3e3e3e] transition-colors">
-                        <td className="px-4 py-3 font-bold text-gray-300 w-16 text-center">{rank}</td>
-                        <td className="px-4 py-3 font-semibold text-white">{flagImg}{name}</td>
-                        <td className="px-4 py-3 font-bold text-right text-[#9df01c]">{score}</td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      );
+    const statusDetail = competition?.status?.type?.detail || fallbackGame?.status?.detail || 'Status Unavailable';
+    const competitors = competition?.competitors || fallbackGame?.golfCompetitors || [];
+    const sortedCompetitors = [...competitors].sort((a: any, b: any) => (a.order || 999) - (b.order || 999));
+    
+    // FIX: Pinpoint the exact date of the session instead of the overall start of the weekend
+    const sessionDateStr = competition?.date || header?.date;
+    const eventDate = sessionDateStr ? new Date(sessionDateStr).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '';
+    
+    let racingCols: any[] = [];
+    if (isRacing && sortedCompetitors.length > 0) {
+         let foundStats = new Map<string, string>();
+         
+         sortedCompetitors.forEach((c: any) => {
+            const arr = c.statistics || c.stats || c.athlete?.statistics || c.athlete?.stats || [];
+            arr.forEach((s: any) => {
+                if (s.name) foundStats.set(s.name, s.abbreviation || s.label || s.name);
+            });
+        });
+
+        if (foundStats.size > 0) {
+            foundStats.forEach((label, name) => {
+                racingCols.push({
+                    label: label.toUpperCase(),
+                    getVal: (c: any) => {
+                        const arr = c.statistics || c.stats || c.athlete?.statistics || c.athlete?.stats || [];
+                        const stat = arr.find((s: any) => s.name === name);
+                        return stat ? (stat.displayValue ?? stat.value ?? '-') : '-';
+                    }
+                });
+            });
+        } else {
+            const skipKeys = ['id', 'uid', 'order', 'type', 'homeAway', 'winner', 'href', 'athlete', 'status', 'linescores', 'records', 'displayName', 'shortName', 'fullName', 'firstName', 'lastName', 'displayValue', 'active', 'color', 'alternateColor', 'links', 'flag', 'headshot', 'logo'];
+            
+            const allFoundKeys = new Set<string>();
+            sortedCompetitors.forEach((c: any) => {
+               Object.keys(c).forEach(k => {
+                  if (!skipKeys.includes(k) && (typeof c[k] === 'string' || typeof c[k] === 'number') && c[k] !== '') {
+                     allFoundKeys.add(k);
+                  }
+               });
+               if (c.athlete) {
+                  Object.keys(c.athlete).forEach(k => {
+                     if (!skipKeys.includes(k) && (typeof c.athlete[k] === 'string' || typeof c.athlete[k] === 'number') && c.athlete[k] !== '') {
+                        allFoundKeys.add(`athlete.${k}`);
+                     }
+                  });
+               }
+            });
+
+            allFoundKeys.forEach(key => {
+                const isAthleteKey = key.startsWith('athlete.');
+                const realKey = isAthleteKey ? key.split('.')[1] : key;
+                
+                const formattedLabel = realKey.replace(/([A-Z])/g, ' $1').trim().toUpperCase();
+                racingCols.push({
+                    label: formattedLabel,
+                    getVal: (c: any) => {
+                       const val = isAthleteKey ? c.athlete?.[realKey] : c[realKey];
+                       return val ?? '-';
+                    }
+                });
+            });
+            
+            if (racingCols.length === 0) {
+                racingCols.push({ label: 'POINTS', getVal: (c: any) => c.score ?? c.points ?? '-' });
+            }
+        }
+        
+        racingCols.push({ 
+            label: 'TIME / STATUS', 
+            getVal: (c: any) => c.status?.displayValue ?? c.reason?.displayValue ?? (c.order === 1 ? 'WINNER' : 'FINISHED') 
+        });
     }
 
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
-        <p className="text-gray-400 font-bold uppercase tracking-widest">Game Data Unavailable</p>
-        <button onClick={onBack} className="text-[#9df01c] font-bold">Go Back</button>
-      </div>
-    );
-  }
-
-  const header = summary.header;
-  const competition = header?.competitions?.[0];
-  
-  if (leagueId === 'PGA') {
-    const eventName = header?.name || header?.shortName || 'Event Details';
-    const statusDetail = competition?.status?.type?.detail || 'Status Unavailable';
-    const competitors = competition?.competitors || [];
-    const sortedCompetitors = [...competitors].sort((a: any, b: any) => (a.order || 999) - (b.order || 999));
-
-    return (
-      <div className="max-w-4xl mx-auto pb-16 sm:pb-24">
-        <div className="sticky top-0 z-10 bg-transparent pt-0 pb-2">
+      <div className="max-w-5xl mx-auto pb-16 sm:pb-24">
+        <div className="sticky top-0 z-20 bg-[#121212] pt-6 pb-2">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <button 
@@ -165,40 +164,77 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
               </button>
             </div>
           </div>
-          <div className="mb-6 text-center">
+
+          <div className="my-3 text-center">
             <h2 className="text-xl sm:text-2xl font-bold text-white mb-1">{eventName}</h2>
-            <p className="text-sm font-normal text-[#9df01c] uppercase tracking-wider">{statusDetail}</p>
+            <div className="flex items-center justify-center gap-2">
+              <p className="text-xs font-bold text-gray-300 uppercase tracking-wider">{statusDetail}</p>
+              {eventDate && (
+                <>
+                  <span className="text-gray-600"> </span>
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">{eventDate}</p>
+                </>
+              )}
+            </div>
           </div>
         </div>
 
-        <div className="overflow-x-auto rounded-lg border border-gray-700">
-          <table className="w-full text-sm text-left">
-            <thead className="text-xs text-gray-400 uppercase bg-[#333] border-b border-gray-600">
+        <div className="overflow-x-auto rounded-lg border border-gray-700 shadow-xl mt-4">
+          <table className="w-full text-sm text-left whitespace-nowrap">
+            <thead className="text-xs text-gray-400 uppercase bg-[#222] border-b border-gray-800 font-black tracking-widest">
               <tr>
-                <th className="px-4 py-3 text-center">Rank</th>
-                <th className="px-4 py-3">Athlete</th>
-                <th className="px-4 py-3 text-right">Score</th>
+                <th className="px-4 py-3.5 text-center w-16">Pos</th>
+                <th className="px-4 py-3.5">{isRacing ? 'Driver' : 'Athlete'}</th>
+                
+                {isRacing ? (
+                   <>
+                     {racingCols.map((col, idx) => (
+                        <th key={idx} className={`px-4 py-3.5 border-l border-gray-800 ${col.label.includes('STATUS') ? 'text-right' : 'text-center'}`}>
+                           {col.label}
+                        </th>
+                     ))}
+                   </>
+                ) : (
+                   <th className="px-4 py-3.5 text-right border-l border-gray-800">Score</th>
+                )}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-700 bg-[#2A2A2A]">
+            <tbody className="divide-y divide-gray-800/50 bg-[#1a1a1a]">
               {sortedCompetitors.length === 0 ? (
                 <tr>
-                  <td colSpan={3} className="p-4 text-center text-gray-400">Leaderboard data not available.</td>
+                  <td colSpan={isRacing ? racingCols.length + 2 : 3} className="p-8 text-center text-gray-500 font-bold uppercase tracking-widest">Leaderboard data not available.</td>
                 </tr>
               ) : (
-                sortedCompetitors.slice(0, 20).map((c: any, index: number) => {
+                sortedCompetitors.slice(0, 40).map((c: any, index: number) => {
                   const rank = c.order || (index + 1);
                   const name = c.athlete?.displayName || c.team?.displayName || 'Unknown';
-                  const score = c.score || c.statistics?.[0]?.displayValue || c.linescores?.[0]?.value || '-';
                   const flagImg = c.athlete?.flag?.href ? (
-                    <img src={c.athlete.flag.href} className="w-4 h-3 inline-block mr-2" alt="flag" />
+                    <img src={c.athlete.flag.href} className="w-4 h-3 inline-block mr-2 rounded-sm shadow-sm" alt="flag" />
                   ) : null;
                   
+                  if (isRacing) {
+                     return (
+                       <tr key={index} className="hover:bg-[#252525] transition-colors group">
+                         <td className="px-4 py-3 font-black text-gray-300 w-16 text-center">{rank}</td>
+                         <td className="px-4 py-3 font-bold text-white group-hover:text-blue-400 transition-colors flex items-center gap-2">{flagImg}{name}</td>
+                         
+                         {racingCols.map((col, idx) => (
+                            <td key={idx} className={`px-4 py-3 border-l border-gray-800/50 uppercase ${col.label.includes('STATUS') ? 'text-right text-gray-400 font-bold' : 'text-center text-gray-300 font-medium'}`}>
+                               {col.getVal(c)}
+                            </td>
+                         ))}
+                       </tr>
+                     );
+                  }
+
+                  const pointsStat = c.statistics?.find((s: any) => s.name === 'points');
+                  const score = c.score ?? c.points ?? pointsStat?.displayValue ?? c.statistics?.[0]?.displayValue ?? c.linescores?.[0]?.value ?? '-';
+                  
                   return (
-                    <tr key={index} className="border-b border-gray-700 hover:bg-[#3e3e3e] transition-colors">
-                      <td className="px-4 py-3 font-bold text-gray-300 w-16 text-center">{rank}</td>
-                      <td className="px-4 py-3 font-semibold text-white">{flagImg}{name}</td>
-                      <td className="px-4 py-3 font-bold text-right text-[#9df01c]">{score}</td>
+                    <tr key={index} className="hover:bg-[#252525] transition-colors group">
+                      <td className="px-4 py-3 font-black text-gray-300 w-16 text-center">{rank}</td>
+                      <td className="px-4 py-3 font-bold text-white group-hover:text-blue-400 transition-colors">{flagImg}{name}</td>
+                      <td className="px-4 py-3 font-black text-right border-l border-gray-800/50 text-white">{score}</td>
                     </tr>
                   );
                 })
@@ -210,16 +246,19 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
     );
   }
 
-  if (!competition) return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
-      <p className="text-gray-400 font-bold uppercase tracking-widest">Game Data Unavailable</p>
-      <button onClick={onBack} className="text-[#9df01c] font-bold">Go Back</button>
-    </div>
-  );
+  // --- STANDARD MATCHUP LOGIC ---
+  if (!summary || !competition) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
+        <p className="text-gray-400 font-bold uppercase tracking-widest">Game Data Unavailable</p>
+        <button onClick={onBack} className="text-gray-300 font-bold">Go Back</button>
+      </div>
+    );
+  }
 
   const away = competition?.competitors?.find((c: any) => c.homeAway === 'away');
   const home = competition?.competitors?.find((c: any) => c.homeAway === 'home');
-  
+
   if (!away || !home) return null;
 
   const boxscore = summary.boxscore;
@@ -227,16 +266,15 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
   const scoringPlays = summary.scoringPlays;
   const isSoccer = ['EPL', 'MLS', 'UCL', 'UEL', 'ESP', 'GER', 'ITA', 'FRA', 'NED', 'MEX'].includes(leagueId);
   const soccerEvents = summary.keyEvents || summary.details || summary.plays || [];
-  
+
   const getPlayTeamLogo = (playTeam: any) => {
     if (!playTeam) return null;
     if (playTeam.id === away.team.id) return getTeamLogo(away.team);
     if (playTeam.id === home.team.id) return getTeamLogo(home.team);
     return getTeamLogo(playTeam);
   };
-  
-  // Handle odds as an array
-  let oddsList = [];
+
+  let oddsList: any[] = [];
   if (summary.pickcenter && summary.pickcenter.length > 0) {
     oddsList = summary.pickcenter;
   } else if (competition.odds && competition.odds.length > 0) {
@@ -244,15 +282,61 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
   } else if (fallbackGame?.odds && fallbackGame.odds.length > 0) {
     oddsList = fallbackGame.odds;
   }
-  
+
   const weather = summary.gameInfo?.weather;
   const broadcasts = competition.broadcasts || summary.broadcasts || competition.geoBroadcasts || summary.geoBroadcasts || fallbackGame?.broadcasts || [];
   const lastPlayText = summary.drives?.current?.plays?.slice(-1)[0]?.text || summary.plays?.slice(-1)[0]?.text || '';
 
+  const sportSlug = leagueId === 'NFL' ? 'football' : leagueId === 'NBA' ? 'basketball' : leagueId === 'MLB' ? 'baseball' : null;
+
+  const renderTeamLogoWithLink = (teamData: any) => {
+    const imgEl = (
+      <img
+        src={getTeamLogo(teamData.team)}
+        alt={teamData.team.name}
+        className={cn("w-16 h-16 sm:w-20 sm:h-20 object-contain", sportSlug ? "transition-transform hover:scale-105 cursor-pointer" : "")}
+        referrerPolicy="no-referrer"
+        onError={(e) => { e.currentTarget.src = `https://placehold.co/48x48/1f2937/ffffff?text=${teamData.team.abbreviation || '?'}` }}
+      />
+    );
+
+    if (sportSlug && teamData.team) {
+      const fullName = teamData.team.displayName || 
+                       [teamData.team.location, teamData.team.name].filter(Boolean).join(' ') || 
+                       teamData.team.abbreviation || '';
+      
+      if (fullName) {
+        const fullSlug = fullName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        return (
+          <Link href={`/${sportSlug}/teams/${fullSlug}`}>
+            {imgEl}
+          </Link>
+        );
+      }
+    }
+    return imgEl;
+  };
+
+  const isLinkableLeague = ['NFL', 'NBA', 'MLB'].includes(leagueId);
+
+  const renderPlayerName = (athleteData: any) => {
+    const name = athleteData.athlete?.displayName || athleteData.athlete?.shortName || 'Player';
+    
+    if (isLinkableLeague && name !== 'Player') {
+      const slug = name.toLowerCase().replace(/\s+(jr|sr|ii|iii|iv|v)\.?$/i, '').replace(/['.]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      return (
+        <Link href={`/player/${slug}`} className="font-bold text-white hover:text-gray-300 transition-colors no-underline">
+          {name}
+        </Link>
+      );
+    }
+    
+    return <span className="font-bold text-white">{name}</span>;
+  };
+
   return (
     <div className="max-w-4xl mx-auto pb-16 sm:pb-24">
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-transparent pt-0 pb-2">
+      <div className="sticky top-0 z-20 bg-[#121212] pt-6 pb-2">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <button 
@@ -268,7 +352,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
               <RefreshCw size={20} className={cn("transition-transform", isFetching && "animate-spin")} />
             </button>
           </div>
-          <div className="text-[#9df01c] text-xs font-bold uppercase tracking-widest">
+          <div className="text-gray-300 text-xs font-bold uppercase tracking-widest">
             {competition.status.type.detail}
           </div>
         </div>
@@ -277,13 +361,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
         <div className="flex items-center justify-center gap-4 sm:gap-8 mb-4">
           {/* Away Team */}
           <div className="flex flex-col items-center gap-1 sm:gap-2 flex-1">
-            <img 
-              src={getTeamLogo(away.team)} 
-              alt={away.team.name} 
-              className="w-16 h-16 sm:w-20 sm:h-20 object-contain"
-              referrerPolicy="no-referrer"
-              onError={(e) => { e.currentTarget.src = `https://placehold.co/48x48/1f2937/ffffff?text=${away.team.abbreviation || '?'}` }}
-            />
+            {renderTeamLogoWithLink(away)}
             <p className="text-[10px] sm:text-xs text-gray-400 font-bold">{away.record?.[0]?.summary || '0-0'}</p>
           </div>
 
@@ -306,13 +384,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
 
           {/* Home Team */}
           <div className="flex flex-col items-center gap-1 sm:gap-2 flex-1">
-            <img 
-              src={getTeamLogo(home.team)} 
-              alt={home.team.name} 
-              className="w-16 h-16 sm:w-20 sm:h-20 object-contain"
-              referrerPolicy="no-referrer"
-              onError={(e) => { e.currentTarget.src = `https://placehold.co/48x48/1f2937/ffffff?text=${home.team.abbreviation || '?'}` }}
-            />
+            {renderTeamLogoWithLink(home)}
             <p className="text-[10px] sm:text-xs text-gray-400 font-bold">{home.record?.[0]?.summary || '0-0'}</p>
           </div>
         </div>
@@ -345,7 +417,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
             >
               {tab.label}
               {activeTab === tab.id && (
-                <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#9df01c] rounded-t-full" />
+                <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-400 rounded-t-full" />
               )}
             </button>
           ))}
@@ -384,7 +456,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
                       </div>
                       <h4 className="font-bold text-[10px] sm:text-xs uppercase tracking-widest">Weather</h4>
                     </div>
-                    <p className="text-sm sm:text-base font-bold leading-tight">{weather.temperature}°F</p>
+                    <p className="text-sm sm:text-base font-bold leading-tight">{weather.temperature} F</p>
                     <p className="text-[10px] sm:text-xs text-gray-400 mt-0.5">{weather.displayValue}</p>
                   </div>
                 )}
@@ -413,7 +485,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
                     <div key={i} className="bg-gray-800/30 border border-gray-700/50 p-3 sm:p-4 rounded-2xl">
                       <div className="flex justify-between items-center mb-2">
                         <h4 className="font-bold text-[10px] sm:text-xs uppercase tracking-widest flex items-center gap-1.5">
-                          <span className="w-1.5 h-1.5 bg-[#9df01c] rounded-full" />
+                          <span className="w-1.5 h-1.5 bg-gray-400 rounded-full" />
                           Betting Odds
                         </h4>
                         {oddsItem.provider?.name && (
@@ -442,12 +514,12 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
           {activeTab === 'boxscore' && (
             <div className="space-y-4">
               {/* Boxscore Sub-tabs */}
-              <div className="flex bg-gray-800/50 p-1 rounded-xl">
+              <div className="flex bg-[#121212] p-1 rounded-full border border-gray-800 mb-4">
                 <button
                   onClick={() => setBoxscoreTab('team')}
                   className={cn(
-                    "flex-1 py-2 text-xs sm:text-sm font-bold uppercase tracking-widest rounded-lg transition-all",
-                    boxscoreTab === 'team' ? "bg-gray-700 text-white shadow-sm" : "text-gray-400 hover:text-gray-200"
+                    "flex-1 py-2 text-xs sm:text-sm font-bold uppercase tracking-widest rounded-full transition-all flex items-center justify-center gap-2",
+                    boxscoreTab === 'team' ? "border border-blue-500 bg-blue-500/10 text-white shadow-sm" : "border border-transparent text-gray-400 hover:text-gray-200"
                   )}
                 >
                   Team
@@ -455,8 +527,8 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
                 <button
                   onClick={() => setBoxscoreTab('away')}
                   className={cn(
-                    "flex-1 py-2 text-xs sm:text-sm font-bold uppercase tracking-widest rounded-lg transition-all flex items-center justify-center gap-2",
-                    boxscoreTab === 'away' ? "bg-gray-700 text-white shadow-sm" : "text-gray-400 hover:text-gray-200"
+                    "flex-1 py-2 text-xs sm:text-sm font-bold uppercase tracking-widest rounded-full transition-all flex items-center justify-center gap-2",
+                    boxscoreTab === 'away' ? "border border-blue-500 bg-blue-500/10 text-white shadow-sm" : "border border-transparent text-gray-400 hover:text-gray-200"
                   )}
                 >
                   <img src={getTeamLogo(away.team)} className="w-4 h-4 object-contain hidden sm:block" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.src = `https://placehold.co/48x48/1f2937/ffffff?text=${away.team.abbreviation || '?'}` }} />
@@ -466,8 +538,8 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
                 <button
                   onClick={() => setBoxscoreTab('home')}
                   className={cn(
-                    "flex-1 py-2 text-xs sm:text-sm font-bold uppercase tracking-widest rounded-lg transition-all flex items-center justify-center gap-2",
-                    boxscoreTab === 'home' ? "bg-gray-700 text-white shadow-sm" : "text-gray-400 hover:text-gray-200"
+                    "flex-1 py-2 text-xs sm:text-sm font-bold uppercase tracking-widest rounded-full transition-all flex items-center justify-center gap-2",
+                    boxscoreTab === 'home' ? "border border-blue-500 bg-blue-500/10 text-white shadow-sm" : "border border-transparent text-gray-400 hover:text-gray-200"
                   )}
                 >
                   <img src={getTeamLogo(home.team)} className="w-4 h-4 object-contain hidden sm:block" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.src = `https://placehold.co/48x48/1f2937/ffffff?text=${home.team.abbreviation || '?'}` }} />
@@ -477,7 +549,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
               </div>
 
               {boxscoreTab === 'team' && (boxscore?.teams || ['MLB', 'CBASE'].includes(leagueId)) && (
-                <div className="bg-[#1a1a1a] border border-gray-800 rounded-2xl p-3 sm:p-4">
+                <div className="bg-[#121212] border border-gray-800 rounded-2xl p-3 sm:p-4 shadow-lg">
                   {['MLB', 'CBASE'].includes(leagueId) ? (
                     <div className="overflow-x-auto">
                       <table className="min-w-full text-sm text-center table-fixed">
@@ -537,6 +609,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
                       const awayVal = parseStatValue(stat.displayValue);
                       const homeVal = parseStatValue(homeStat.displayValue);
                       const total = awayVal + homeVal;
+
                       const awayPct = total > 0 ? (awayVal / total) * 100 : 50;
                       const homePct = total > 0 ? (homeVal / total) * 100 : 50;
 
@@ -595,17 +668,17 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
                           </div>
                           <div className="flex h-1.5 rounded-full overflow-hidden bg-gray-800">
                             <div 
-                              style={{ 
-                                width: `${awayPct}%`, 
-                                backgroundColor: `#${away.team.color || '3b82f6'}` 
-                              }} 
-                            />
+                               style={{ 
+                                 width: `${awayPct}%`, 
+                                 backgroundColor: `#${away.team.color || '3b82f6'}` 
+                               }} 
+                             />
                             <div 
-                              style={{ 
-                                width: `${homePct}%`, 
-                                backgroundColor: `#${home.team.color || 'ef4444'}` 
-                              }} 
-                            />
+                               style={{ 
+                                 width: `${homePct}%`, 
+                                 backgroundColor: `#${home.team.color || 'ef4444'}` 
+                               }} 
+                             />
                           </div>
                         </div>
                       );
@@ -617,32 +690,31 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
               )}
 
               {boxscoreTab === 'away' && boxscore?.players && (
-                <div className="bg-gray-800/30 border border-gray-700/50 rounded-2xl overflow-hidden">
+                <div className="bg-[#121212] border border-gray-800 rounded-2xl overflow-hidden shadow-lg">
                   {boxscore.players.filter((t: any) => t.team.id === away.team.id).map((teamBox: any, i: number) => (
-                    <div key={i} className="space-y-4">
+                    <div key={i} className="flex flex-col">
                       {teamBox.statistics?.map((statGroup: any, statIdx: number) => (
-                        <div key={statIdx} className="overflow-x-auto">
-                          <h3 className="px-3 pt-3 text-sm sm:text-base font-bold text-white mb-1">{statGroup.name || statGroup.label || ''}</h3>
-                          <table className="w-full text-left text-xs">
-                            <thead>
-                              <tr className="text-gray-500 font-bold uppercase tracking-widest border-b border-gray-700/30">
-                                <th className="px-3 py-2 sm:p-3 sticky left-0 bg-[#1a1a1a] z-10">Player</th>
+                        <div key={statIdx} className={cn("overflow-x-auto scrollbar-hide", statIdx !== teamBox.statistics.length - 1 ? "border-b border-gray-800" : "")}>
+                          <table className="w-full text-sm text-left whitespace-nowrap">
+                            <thead className="text-[10px] sm:text-xs text-gray-400 uppercase bg-[#1e1e1e]">
+                              <tr>
+                                <th className="px-3 py-2.5 sm:px-4 sm:py-3 w-32 sm:w-48 sticky left-0 bg-[#1e1e1e] z-10 font-black tracking-widest">{statGroup.name}</th>
                                 {statGroup.labels?.map((label: string, j: number) => (
-                                  <th key={j} className="px-3 py-2 sm:p-3 text-center whitespace-nowrap">{label}</th>
+                                  <th key={j} className="px-3 py-2.5 sm:px-4 sm:py-3 text-center font-bold">{label}</th>
                                 ))}
                               </tr>
                             </thead>
-                            <tbody>
+                            <tbody className="divide-y divide-gray-800/50 bg-[#121212]">
                               {statGroup.athletes?.map((athlete: any, j: number) => (
-                                <tr key={j} className="border-b border-gray-700/10 hover:bg-gray-700/20 transition-colors">
-                                  <td className="px-3 py-2 sm:p-3 sticky left-0 bg-[#1a1a1a] z-10 border-r border-gray-700/30">
+                                <tr key={j} className="hover:bg-[#1a1a1a] transition-colors group">
+                                  <td className="px-3 py-2 sm:px-4 sm:py-3 font-semibold text-white sticky left-0 bg-[#121212] group-hover:bg-[#1a1a1a] z-10 transition-colors">
                                     <div className="flex items-baseline gap-2 whitespace-nowrap">
-                                      <span className="font-bold text-white">{athlete.athlete?.displayName || athlete.athlete?.shortName || 'Player'}</span>
-                                      <span className="text-[9px] sm:text-[10px] text-gray-500 uppercase">{athlete.athlete?.position?.abbreviation}</span>
+                                      {renderPlayerName(athlete)}
+                                      <span className="text-[9px] sm:text-[10px] text-gray-500 uppercase font-bold">{athlete.athlete?.position?.abbreviation}</span>
                                     </div>
                                   </td>
                                   {athlete.stats?.map((stat: string, k: number) => (
-                                    <td key={k} className="px-3 py-2 sm:p-3 text-center font-mono text-gray-300">{stat.replace(/-/g, '/')}</td>
+                                    <td key={k} className="px-3 py-2 sm:px-4 sm:py-3 text-center font-medium text-gray-300">{stat.replace(/-/g, '/')}</td>
                                   ))}
                                 </tr>
                               ))}
@@ -656,32 +728,31 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
               )}
 
               {boxscoreTab === 'home' && boxscore?.players && (
-                <div className="bg-gray-800/30 border border-gray-700/50 rounded-2xl overflow-hidden">
+                <div className="bg-[#121212] border border-gray-800 rounded-2xl overflow-hidden shadow-lg">
                   {boxscore.players.filter((t: any) => t.team.id === home.team.id).map((teamBox: any, i: number) => (
-                    <div key={i} className="space-y-4">
+                    <div key={i} className="flex flex-col">
                       {teamBox.statistics?.map((statGroup: any, statIdx: number) => (
-                        <div key={statIdx} className="overflow-x-auto">
-                          <h3 className="px-3 pt-3 text-sm sm:text-base font-bold text-white mb-1">{statGroup.name || statGroup.label || ''}</h3>
-                          <table className="w-full text-left text-xs">
-                            <thead>
-                              <tr className="text-gray-500 font-bold uppercase tracking-widest border-b border-gray-700/30">
-                                <th className="px-3 py-2 sm:p-3 sticky left-0 bg-[#1a1a1a] z-10">Player</th>
+                        <div key={statIdx} className={cn("overflow-x-auto scrollbar-hide", statIdx !== teamBox.statistics.length - 1 ? "border-b border-gray-800" : "")}>
+                          <table className="w-full text-sm text-left whitespace-nowrap">
+                            <thead className="text-[10px] sm:text-xs text-gray-400 uppercase bg-[#1e1e1e]">
+                              <tr>
+                                <th className="px-3 py-2.5 sm:px-4 sm:py-3 w-32 sm:w-48 sticky left-0 bg-[#1e1e1e] z-10 font-black tracking-widest">{statGroup.name}</th>
                                 {statGroup.labels?.map((label: string, j: number) => (
-                                  <th key={j} className="px-3 py-2 sm:p-3 text-center whitespace-nowrap">{label}</th>
+                                  <th key={j} className="px-3 py-2.5 sm:px-4 sm:py-3 text-center font-bold">{label}</th>
                                 ))}
                               </tr>
                             </thead>
-                            <tbody>
+                            <tbody className="divide-y divide-gray-800/50 bg-[#121212]">
                               {statGroup.athletes?.map((athlete: any, j: number) => (
-                                <tr key={j} className="border-b border-gray-700/10 hover:bg-gray-700/20 transition-colors">
-                                  <td className="px-3 py-2 sm:p-3 sticky left-0 bg-[#1a1a1a] z-10 border-r border-gray-700/30">
+                                <tr key={j} className="hover:bg-[#1a1a1a] transition-colors group">
+                                  <td className="px-3 py-2 sm:px-4 sm:py-3 font-semibold text-white sticky left-0 bg-[#121212] group-hover:bg-[#1a1a1a] z-10 transition-colors">
                                     <div className="flex items-baseline gap-2 whitespace-nowrap">
-                                      <span className="font-bold text-white">{athlete.athlete?.displayName || athlete.athlete?.shortName || 'Player'}</span>
-                                      <span className="text-[9px] sm:text-[10px] text-gray-500 uppercase">{athlete.athlete?.position?.abbreviation}</span>
+                                      {renderPlayerName(athlete)}
+                                      <span className="text-[9px] sm:text-[10px] text-gray-500 uppercase font-bold">{athlete.athlete?.position?.abbreviation}</span>
                                     </div>
                                   </td>
                                   {athlete.stats?.map((stat: string, k: number) => (
-                                    <td key={k} className="px-3 py-2 sm:p-3 text-center font-mono text-gray-300">{stat.replace(/-/g, '/')}</td>
+                                    <td key={k} className="px-3 py-2 sm:px-4 sm:py-3 text-center font-medium text-gray-300">{stat.replace(/-/g, '/')}</td>
                                   ))}
                                 </tr>
                               ))}
@@ -703,7 +774,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
           )}
 
           {activeTab === 'plays' && (
-            <div className="space-y-4 sm:space-y-6">
+            <div className="space-y-4 sm:space-y-6 pt-4">
               {/* Line Score Table */}
               {away.linescores && home.linescores && (
                 <div className="bg-gray-800/50 rounded-2xl border border-gray-700/50 p-2 sm:p-3 overflow-x-auto">
@@ -738,7 +809,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
                         {away.linescores.map((ls: any, i: number) => (
                           <td key={i} className="py-1.5 sm:py-2 px-1 sm:px-2 text-gray-400">{ls.displayValue || ls.value}</td>
                         ))}
-                        <td className="py-1.5 sm:py-2 px-1 sm:px-2 font-black text-[#9df01c] text-xs sm:text-sm">{away.score}</td>
+                        <td className="py-1.5 sm:py-2 px-1 sm:px-2 font-black text-gray-300 text-xs sm:text-sm">{away.score}</td>
                       </tr>
                       <tr>
                         <td className="py-1.5 sm:py-2 px-1 text-left flex items-center gap-2">
@@ -748,7 +819,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
                         {home.linescores.map((ls: any, i: number) => (
                           <td key={i} className="py-1.5 sm:py-2 px-1 sm:px-2 text-gray-400">{ls.displayValue || ls.value}</td>
                         ))}
-                        <td className="py-1.5 sm:py-2 px-1 sm:px-2 font-black text-[#9df01c] text-xs sm:text-sm">{home.score}</td>
+                        <td className="py-1.5 sm:py-2 px-1 sm:px-2 font-black text-gray-300 text-xs sm:text-sm">{home.score}</td>
                       </tr>
                     </tbody>
                   </table>
@@ -758,69 +829,43 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
               {/* Scoring Plays */}
               {isSoccer ? (
                 soccerEvents && soccerEvents.length > 0 ? (
-                  <div className="space-y-2 sm:space-y-3">
-                    <h3 className="text-base sm:text-lg font-black uppercase mb-2 sm:mb-3">Match Timeline</h3>
-                    {soccerEvents.map((event: any, i: number) => {
-                      const teamData = competition.competitors?.find((c: any) => c.id === event.team?.id);
-                      const teamColor = teamData ? `#${teamData.team.color || 'ffffff'}` : '#9ca3af';
+                  <div className="bg-gray-800/30 border border-gray-700/50 rounded-2xl overflow-hidden p-2 sm:p-4">
+                    {soccerEvents.slice().reverse().map((event: any, i: number) => {
+                      const isGoal = event.type?.text?.toLowerCase().includes('goal') || event.scoringPlay;
+                      const isCard = event.type?.text?.toLowerCase().includes('card');
+                      const isYellow = isCard && event.type?.text?.toLowerCase().includes('yellow');
+                      const isRed = isCard && event.type?.text?.toLowerCase().includes('red');
+                      const teamData = event.team || (event.participants && event.participants[0]?.athlete?.team);
                       
-                      let Icon = Circle;
-                      let iconColor = "text-gray-500";
-                      let eventTypeClass = "text-gray-300";
-                      const typeText = event.type?.text?.toLowerCase() || '';
-                      
-                      if (typeText.includes('goal')) {
-                        Icon = Circle;
-                        iconColor = "text-[#9df01c] fill-[#9df01c]";
-                        eventTypeClass = "text-white font-bold";
-                      } else if (typeText.includes('yellow card')) {
-                        Icon = Square;
-                        iconColor = "text-yellow-400 fill-yellow-400";
-                      } else if (typeText.includes('red card')) {
-                        Icon = Square;
-                        iconColor = "text-red-500 fill-red-500";
-                      } else if (typeText.includes('substitution')) {
-                        Icon = ArrowLeftRight;
-                        iconColor = "text-blue-400";
-                      } else if (typeText.includes('penalty')) {
-                        Icon = AlertCircle;
-                        iconColor = "text-orange-400";
-                      }
-                      
-                      let playersHtml = '';
-                      if (event.participants) {
-                        playersHtml = event.participants.map((p: any) => p.athlete?.displayName).join(', ');
-                      } else if (event.text) {
-                        playersHtml = event.text;
-                      }
-
                       return (
-                        <div 
-                          key={i} 
-                          className={cn(
-                            "bg-gray-800/30 p-2 sm:p-3 rounded-r-lg flex items-center gap-3 sm:gap-4",
-                            teamData && "border-l-4"
-                          )}
-                          style={teamData ? { borderLeftColor: teamColor } : {}}
-                        >
-                          <div className="w-10 sm:w-12 text-center flex flex-col items-center justify-center border-r border-gray-700/50 pr-2 sm:pr-3">
-                            <span className="font-bold text-base sm:text-lg text-white">{event.clock?.displayValue || '-'}</span>
+                        <div key={i} className="flex gap-3 sm:gap-4 p-3 sm:p-4 border-b border-gray-800 hover:bg-gray-800/50 transition-colors last:border-0 rounded-xl items-center">
+                          <div className="w-10 sm:w-12 text-center shrink-0">
+                            <span className="text-[10px] sm:text-xs font-bold text-gray-400 block">{event.clock?.displayValue || event.time || "FT"}</span>
                           </div>
-                          <div className="flex-shrink-0 w-5 sm:w-6 flex justify-center">
-                            <Icon className={cn("w-3.5 h-3.5 sm:w-4 sm:h-4", iconColor)} />
+                          
+                          <div className="flex-1 min-w-0">
+                             <div className="flex items-center gap-2 mb-1">
+                               {isGoal ? <div className="w-2.5 h-2.5 rounded-full bg-gray-400" /> : 
+                                 isYellow ? <div className="w-2 sm:w-2.5 h-3 sm:h-3.5 bg-yellow-400 rounded-sm" /> : 
+                                 isRed ? <div className="w-2 sm:w-2.5 h-3 sm:h-3.5 bg-red-500 rounded-sm" /> : 
+                                 <div className="w-2 h-2 rounded-full border-2 border-gray-500" />}
+                               <span className={cn(
+                                 "font-bold text-[10px] sm:text-xs uppercase tracking-widest",
+                                 isGoal ? "text-gray-300" : isCard ? "text-white" : "text-gray-400"
+                               )}>
+                                 {event.type?.text || 'Event'}
+                               </span>
+                             </div>
+                             <p className="text-sm sm:text-base font-medium text-white leading-tight">{event.text}</p>
                           </div>
-                          <div className="flex-grow">
-                            <p className={cn("text-xs sm:text-sm uppercase tracking-wide", eventTypeClass)}>
-                              {event.type?.text || 'Event'}
-                            </p>
-                            <p className="text-gray-400 text-[10px] sm:text-xs">{playersHtml}</p>
-                          </div>
+
                           {teamData && (
                             <img 
-                              src={getTeamLogo(teamData.team)} 
-                              className="w-5 h-5 sm:w-6 sm:h-6 object-contain opacity-50" 
+                               src={getTeamLogo(teamData)} 
+                               alt="" 
+                               className="w-6 h-6 sm:w-8 sm:h-8 object-contain opacity-50" 
                               referrerPolicy="no-referrer"
-                              onError={(e) => { e.currentTarget.src = `https://placehold.co/48x48/1f2937/ffffff?text=${teamData.team.abbreviation || '?'}` }}
+                              onError={(e) => { e.currentTarget.src = `https://placehold.co/48x48/1f2937/ffffff?text=${teamData.team?.abbreviation || teamData.abbreviation || '?'}` }}
                             />
                           )}
                         </div>
@@ -837,20 +882,22 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
                   <h3 className="text-base sm:text-lg font-black uppercase mb-2 sm:mb-3">Scoring Plays</h3>
                   {(scoringPlays || plays.filter((p: any) => p.scoringPlay)).slice().reverse().map((play: any, i: number) => (
                     <div key={i} className="flex gap-2 sm:gap-3 p-2 sm:p-3 bg-gray-800/30 border border-gray-700/50 rounded-xl hover:border-gray-600 transition-colors">
-                      <div className="flex flex-col items-center gap-1 min-w-[45px] sm:min-w-[55px]">
-                        <div className="text-[10px] sm:text-xs font-black text-[#9df01c]">{play.clock?.displayValue}</div>
-                        <div className="text-[9px] sm:text-[10px] font-bold text-gray-500 uppercase">{play.period?.number}Q</div>
+                      <div className="flex flex-col items-center justify-center shrink-0 w-10 sm:w-14">
+                        <img 
+                           src={getPlayTeamLogo(play.team)} 
+                           className="w-6 h-6 sm:w-8 sm:h-8 object-contain mb-1" 
+                           referrerPolicy="no-referrer"
+                          onError={(e) => { e.currentTarget.src = `https://placehold.co/48x48/1f2937/ffffff?text=?` }}
+                        />
+                        <span className="text-[9px] sm:text-[10px] font-bold text-gray-400">{play.clock?.displayValue || ''} Q{play.period?.number || ''}</span>
                       </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-0.5">
-                          {play.team && (
-                            <img src={getPlayTeamLogo(play.team)} className="w-5 h-5 sm:w-6 sm:h-6 object-contain" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.src = `https://placehold.co/48x48/1f2937/ffffff?text=${play.team.abbreviation || '?'}` }} />
-                          )}
-                          <span className="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                            {play.type?.text || play.scoringType?.displayName}
-                          </span>
-                        </div>
-                        <p className="text-[11px] sm:text-sm leading-relaxed">{play.text}</p>
+                      <div className="flex-1 flex flex-col justify-center min-w-0 pr-2">
+                         <div className="text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-widest mb-0.5">{play.type?.text}</div>
+                         <p className="text-xs sm:text-sm text-gray-200 leading-snug">{play.text}</p>
+                      </div>
+                      <div className="flex flex-col items-end justify-center shrink-0 font-mono text-sm sm:text-base border-l border-gray-700/50 pl-2 sm:pl-3 min-w-[50px]">
+                         <div className={cn("font-bold", play.awayScore > play.homeScore ? "text-white" : "text-gray-400")}>{play.awayScore}</div>
+                         <div className={cn("font-bold", play.homeScore > play.awayScore ? "text-white" : "text-gray-400")}>{play.homeScore}</div>
                       </div>
                     </div>
                   ))}
@@ -861,7 +908,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
                   {plays.slice().reverse().map((play: any, i: number) => (
                     <div key={i} className="flex gap-2 sm:gap-3 p-2 sm:p-3 bg-gray-800/30 border border-gray-700/50 rounded-xl hover:border-gray-600 transition-colors">
                       <div className="flex flex-col items-center gap-1 min-w-[45px] sm:min-w-[55px]">
-                        <div className="text-[10px] sm:text-xs font-black text-[#9df01c]">{play.clock?.displayValue}</div>
+                        <div className="text-[10px] sm:text-xs font-black text-gray-300">{play.clock?.displayValue}</div>
                         <div className="text-[9px] sm:text-[10px] font-bold text-gray-500 uppercase">{play.period?.number}Q</div>
                       </div>
                       <div className="flex-1">
