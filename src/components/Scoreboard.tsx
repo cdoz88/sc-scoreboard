@@ -7,9 +7,7 @@ import { format, addDays, subDays, isToday } from 'date-fns';
 import { CalendarPicker } from './CalendarPicker';
 import { Game } from '../types';
 import { Dropdown } from './Dropdown';
-import { AllSportsIcon, FootballIcon, BasketballIcon, BaseballIcon, HockeyIcon, GolfIcon, SoccerIcon } from './icons';
-import { useIsMobile } from '../hooks/useIsMobile';
-import { cn } from '../lib/utils';
+import { AllSportsIcon, FootballIcon, BasketballIcon, BaseballIcon, HockeyIcon, GolfIcon, SoccerIcon, RacingIcon } from './icons';
 
 interface ScoreboardProps {
   onSelectGame: (id: string, league: string) => void;
@@ -28,6 +26,7 @@ const SPORT_OPTIONS = [
   { value: 'BASEBALL', label: 'Baseball', icon: <BaseballIcon /> },
   { value: 'HOCKEY', label: 'Hockey', icon: <HockeyIcon /> },
   { value: 'GOLF', label: 'Golf', icon: <GolfIcon /> },
+  { value: 'RACING', label: 'Racing', icon: <RacingIcon /> },
   { value: 'SOCCER', label: 'Soccer', icon: <SoccerIcon /> },
 ];
 
@@ -40,9 +39,32 @@ export const Scoreboard = ({
   selectedLeague,
   setSelectedLeague
 }: ScoreboardProps) => {
-  const isMobile = useIsMobile();
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const calendarRef = useRef<HTMLDivElement>(null);
+
+  // 1. Read the URL query parameters on initial load
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const sportParam = params.get('sport');
+      const leagueParam = params.get('league');
+
+      if (leagueParam && leagueParam !== 'ALL') {
+        const upperLeague = leagueParam.toUpperCase();
+        setSelectedLeague(upperLeague);
+        
+        // Smart Detection: Auto-set the sport if they only passed the league (e.g. ?league=NBA)
+        const foundLeague = LEAGUES.find(l => l.id === upperLeague);
+        if (foundLeague) {
+          setSelectedSport(foundLeague.sport.toUpperCase());
+        }
+      } else if (sportParam) {
+        setSelectedSport(sportParam.toUpperCase());
+        if (leagueParam === 'ALL') setSelectedLeague('ALL');
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -59,9 +81,29 @@ export const Scoreboard = ({
     return LEAGUES.filter(l => l.sport.toUpperCase() === selectedSport);
   }, [selectedSport]);
 
+  // 2. Update the URL dynamically when the user changes the Sport dropdown
   const handleSportChange = (value: string) => {
     setSelectedSport(value);
     setSelectedLeague('ALL');
+    
+    if (typeof window !== 'undefined') {
+        const url = new URL(window.location.href);
+        url.searchParams.set('sport', value);
+        url.searchParams.set('league', 'ALL');
+        window.history.replaceState({}, '', url.toString());
+    }
+  };
+
+  // 3. Update the URL dynamically when the user changes the League dropdown
+  const handleLeagueChange = (value: string) => {
+    setSelectedLeague(value);
+    
+    if (typeof window !== 'undefined') {
+        const url = new URL(window.location.href);
+        url.searchParams.set('league', value);
+        url.searchParams.set('sport', selectedSport);
+        window.history.replaceState({}, '', url.toString());
+    }
   };
 
   const { data: games, isLoading } = useQuery({
@@ -77,39 +119,42 @@ export const Scoreboard = ({
         leaguesToFetch = [selectedLeague];
       }
       
-      const settled = await Promise.allSettled(
+      const results = await Promise.all(
         leaguesToFetch.map(id => fetchScoreboard(id, format(date, 'yyyyMMdd')))
       );
-      const results: Game[] = [];
-      for (const res of settled) {
-        if (res.status === 'fulfilled' && Array.isArray(res.value)) {
-          results.push(...res.value);
-        }
-      }
-      return results;
+      return results.flat();
     },
-    staleTime: 1000 * 45,
-    refetchOnWindowFocus: false,
   });
 
   const groupedGames = useMemo(() => {
     if (!games) return {};
     const groups: Record<string, Game[]> = {};
+    
     games.forEach(game => {
       if (!groups[game.league]) {
         groups[game.league] = [];
       }
       groups[game.league].push(game);
     });
+
+    const stateRank: Record<string, number> = { 'in': 1, 'pre': 2, 'post': 3 };
+    
+    Object.keys(groups).forEach(league => {
+      groups[league].sort((a, b) => {
+        const rankA = stateRank[a.status.state] || 4;
+        const rankB = stateRank[b.status.state] || 4;
+        return rankA - rankB;
+      });
+    });
+
     return groups;
   }, [games]);
 
   return (
-    <div className="space-y-4">
-      <div className={cn("flex items-center gap-4 mb-6", isMobile ? "flex-col w-full" : "flex-col sm:flex-row justify-between")}>
-        {/* League and Sport Filters */}
-        <div className={cn("flex items-center gap-2 z-30", isMobile ? "w-full" : "w-full sm:w-auto")}>
-          <div className={cn("relative", isMobile ? "flex-1" : "w-full sm:w-48")}>
+    <div className="space-y-6 min-h-[450px]">
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-8">
+        <div className="flex items-center gap-2 w-full sm:w-auto z-30">
+          <div className="relative w-full sm:w-48">
             <Dropdown
               value={selectedSport}
               options={SPORT_OPTIONS}
@@ -117,74 +162,71 @@ export const Scoreboard = ({
             />
           </div>
 
-          <div className={cn("relative", isMobile ? "flex-1" : "w-full sm:w-40")}>
+          <div className="relative w-full sm:w-40">
             <Dropdown
               value={selectedLeague}
               options={[
                 { value: 'ALL', label: 'ALL' },
                 ...availableLeagues.map(l => ({ value: l.id, label: l.name }))
               ]}
-              onChange={setSelectedLeague}
+              onChange={handleLeagueChange}
               disabled={selectedSport === 'ALL SPORTS'}
             />
           </div>
         </div>
 
-        {/* Date Navigation */}
-        <div className={cn("flex items-center gap-2 z-10", isMobile ? "w-full justify-center" : "w-full sm:w-auto justify-center sm:justify-end")}>
+        <div className="relative flex items-center gap-2 w-full sm:w-auto justify-center sm:justify-end z-50" ref={calendarRef}>
           <button
             onClick={() => setDate(subDays(date, 1))}
-            className="bg-[#2c2c2c] hover:bg-[#374151] px-3 py-2 rounded-lg text-gray-300 transition-colors"
+            className="p-2.5 bg-[#2c2c2c] hover:bg-[#374151] rounded-lg transition-colors text-gray-300"
           >
             <ChevronLeft size={16} />
           </button>
           
-          <div className="relative bg-[#2c2c2c] hover:bg-[#374151] rounded-lg group transition-colors flex items-center gap-2 px-4 py-2 cursor-pointer w-28 justify-between">
-            <div className="text-sm font-bold text-gray-200 uppercase tracking-wide truncate">
-              {isToday(date) ? 'TODAY' : format(date, 'MMM d')}
-            </div>
-            <ChevronDown size={14} className="text-gray-400 flex-shrink-0" />
-            <input
-              type="date"
-              value={format(date, 'yyyy-MM-dd')}
-              onChange={(e) => {
-                if (e.target.value) {
-                  const [y, m, d] = e.target.value.split('-').map(Number);
-                  setDate(new Date(y, m - 1, d, 12, 0, 0));
-                }
-              }}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-            />
-          </div>
+          <button
+            onClick={() => setIsCalendarOpen(!isCalendarOpen)}
+            className="flex items-center justify-center gap-2 w-32 px-4 py-2.5 bg-[#2c2c2c] hover:bg-[#374151] rounded-lg transition-colors font-bold text-sm text-gray-200 uppercase tracking-wide cursor-pointer"
+          >
+            <span className="pointer-events-none">{isToday(date) ? 'TODAY' : format(date, 'MMM d')}</span>
+            <ChevronDown size={14} className="text-gray-400 pointer-events-none" />
+          </button>
 
           <button
             onClick={() => setDate(addDays(date, 1))}
-            className="bg-[#2c2c2c] hover:bg-[#374151] px-3 py-2 rounded-lg text-gray-300 transition-colors"
+            className="p-2.5 bg-[#2c2c2c] hover:bg-[#374151] rounded-lg transition-colors text-gray-300"
           >
             <ChevronRight size={16} />
           </button>
+
+          {isCalendarOpen && (
+            <CalendarPicker 
+              selectedDate={date} 
+              onSelect={setDate} 
+              onClose={() => setIsCalendarOpen(false)} 
+            />
+          )}
         </div>
       </div>
 
       {isLoading ? (
-        <div className={cn("grid gap-4", isMobile ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4")}>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {[...Array(8)].map((_, i) => (
-            <div key={i} className="h-28 bg-[#2A2A2A] animate-pulse rounded-xl border border-gray-800" />
+            <div key={i} className="h-40 bg-gray-800/50 animate-pulse rounded-xl border border-gray-700/50" />
           ))}
         </div>
       ) : games?.length === 0 ? (
-        <div className="text-center py-16 bg-[#2A2A2A] rounded-xl border border-gray-800">
-          <p className="text-gray-400 font-bold uppercase tracking-widest text-sm">No games scheduled for this date</p>
+        <div className="text-center py-20 bg-gray-800/30 rounded-2xl border border-dashed border-gray-700">
+          <p className="text-gray-500 font-bold uppercase tracking-widest">No games scheduled</p>
         </div>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-8">
           {LEAGUES.filter(l => groupedGames[l.id]).map(league => (
-            <div key={league.id} className="space-y-3">
-              <div className="flex items-center gap-2 border-b border-gray-800 pb-2 mb-3">
-                <div className="w-2.5 h-2.5 rounded-full bg-[#9df01c]" />
-                <h2 className="text-lg font-bold uppercase tracking-wider text-white">{league.name}</h2>
+            <div key={league.id} className="space-y-4">
+              <div className="flex items-center gap-2 border-b border-gray-800 pb-2">
+                <div className="w-3 h-3 rounded-full bg-gradient-to-br from-gray-300 to-gray-500 shadow-sm" />
+                <h2 className="text-xl font-black uppercase tracking-widest">{league.name}</h2>
               </div>
-              <div className={cn("grid gap-4", isMobile ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4")}>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {groupedGames[league.id].map(game => (
                   <GameCard 
                     key={game.id} 

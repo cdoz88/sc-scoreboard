@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'motion/react';
 import { ChevronLeft, MapPin, Tv, Info, Users, List, RefreshCw, Cloud, Circle, Square, ArrowLeftRight, AlertCircle } from 'lucide-react';
-import Link from 'next/link';
 import { fetchGameSummary } from '../services/espnService';
 import { cn, getTeamLogo } from '../lib/utils';
 
@@ -147,7 +146,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
 
     return (
       <div className="max-w-5xl mx-auto pb-16 sm:pb-24">
-        <div className="sticky top-0 z-20 bg-[#121212] pt-6 pb-2">
+        <div className="sticky top-0 z-20 bg-transparent pt-6 pb-2">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <button 
@@ -199,7 +198,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
                 )}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-800/50 bg-[#1a1a1a]">
+            <tbody className="divide-y divide-gray-800/50 bg-transparent">
               {sortedCompetitors.length === 0 ? (
                 <tr>
                   <td colSpan={isRacing ? racingCols.length + 2 : 3} className="p-8 text-center text-gray-500 font-bold uppercase tracking-widest">Leaderboard data not available.</td>
@@ -214,7 +213,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
                   
                   if (isRacing) {
                      return (
-                       <tr key={index} className="hover:bg-[#252525] transition-colors group">
+                       <tr key={index} className="hover:bg-white/5 transition-colors group">
                          <td className="px-4 py-3 font-black text-gray-300 w-16 text-center">{rank}</td>
                          <td className="px-4 py-3 font-bold text-white group-hover:text-blue-400 transition-colors flex items-center gap-2">{flagImg}{name}</td>
                          
@@ -231,7 +230,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
                   const score = c.score ?? c.points ?? pointsStat?.displayValue ?? c.statistics?.[0]?.displayValue ?? c.linescores?.[0]?.value ?? '-';
                   
                   return (
-                    <tr key={index} className="hover:bg-[#252525] transition-colors group">
+                    <tr key={index} className="hover:bg-white/5 transition-colors group">
                       <td className="px-4 py-3 font-black text-gray-300 w-16 text-center">{rank}</td>
                       <td className="px-4 py-3 font-bold text-white group-hover:text-blue-400 transition-colors">{flagImg}{name}</td>
                       <td className="px-4 py-3 font-black text-right border-l border-gray-800/50 text-white">{score}</td>
@@ -308,9 +307,9 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
       if (fullName) {
         const fullSlug = fullName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
         return (
-          <Link href={`/${sportSlug}/teams/${fullSlug}`}>
+          <a href={`/${sportSlug}/teams/${fullSlug}`}>
             {imgEl}
-          </Link>
+          </a>
         );
       }
     }
@@ -325,9 +324,9 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
     if (isLinkableLeague && name !== 'Player') {
       const slug = name.toLowerCase().replace(/\s+(jr|sr|ii|iii|iv|v)\.?$/i, '').replace(/['.]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
       return (
-        <Link href={`/player/${slug}`} className="font-bold text-white hover:text-gray-300 transition-colors no-underline">
+        <a href={`/player/${slug}`} className="font-bold text-white hover:text-gray-300 transition-colors no-underline">
           {name}
-        </Link>
+        </a>
       );
     }
     
@@ -336,7 +335,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
 
   return (
     <div className="max-w-4xl mx-auto pb-16 sm:pb-24">
-      <div className="sticky top-0 z-20 bg-[#121212] pt-6 pb-2">
+      <div className="sticky top-0 z-20 bg-transparent pt-6 pb-2">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <button 
@@ -514,12 +513,12 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
           {activeTab === 'boxscore' && (
             <div className="space-y-4">
               {/* Boxscore Sub-tabs */}
-              <div className="flex bg-[#121212] p-1 rounded-full border border-gray-800 mb-4">
+              <div className="flex bg-transparent p-1 rounded-full border border-gray-800 mb-4">
                 <button
                   onClick={() => setBoxscoreTab('team')}
                   className={cn(
                     "flex-1 py-2 text-xs sm:text-sm font-bold uppercase tracking-widest rounded-full transition-all flex items-center justify-center gap-2",
-                    boxscoreTab === 'team' ? "border border-blue-500 bg-blue-500/10 text-white shadow-sm" : "border border-transparent text-gray-400 hover:text-gray-200"
+                    boxscoreTab === 'team' ? "border border-green-500 bg-green-500/10 text-white shadow-sm" : "border border-transparent text-gray-400 hover:text-gray-200"
                   )}
                 >
                   Team
@@ -528,7 +527,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
                   onClick={() => setBoxscoreTab('away')}
                   className={cn(
                     "flex-1 py-2 text-xs sm:text-sm font-bold uppercase tracking-widest rounded-full transition-all flex items-center justify-center gap-2",
-                    boxscoreTab === 'away' ? "border border-blue-500 bg-blue-500/10 text-white shadow-sm" : "border border-transparent text-gray-400 hover:text-gray-200"
+                    boxscoreTab === 'away' ? "border border-green-500 bg-green-500/10 text-white shadow-sm" : "border border-transparent text-gray-400 hover:text-gray-200"
                   )}
                 >
                   <img src={getTeamLogo(away.team)} className="w-4 h-4 object-contain hidden sm:block" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.src = `https://placehold.co/48x48/1f2937/ffffff?text=${away.team.abbreviation || '?'}` }} />
@@ -539,7 +538,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
                   onClick={() => setBoxscoreTab('home')}
                   className={cn(
                     "flex-1 py-2 text-xs sm:text-sm font-bold uppercase tracking-widest rounded-full transition-all flex items-center justify-center gap-2",
-                    boxscoreTab === 'home' ? "border border-blue-500 bg-blue-500/10 text-white shadow-sm" : "border border-transparent text-gray-400 hover:text-gray-200"
+                    boxscoreTab === 'home' ? "border border-green-500 bg-green-500/10 text-white shadow-sm" : "border border-transparent text-gray-400 hover:text-gray-200"
                   )}
                 >
                   <img src={getTeamLogo(home.team)} className="w-4 h-4 object-contain hidden sm:block" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.src = `https://placehold.co/48x48/1f2937/ffffff?text=${home.team.abbreviation || '?'}` }} />
@@ -549,7 +548,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
               </div>
 
               {boxscoreTab === 'team' && (boxscore?.teams || ['MLB', 'CBASE'].includes(leagueId)) && (
-                <div className="bg-[#121212] border border-gray-800 rounded-2xl p-3 sm:p-4 shadow-lg">
+                <div className="bg-transparent border border-gray-800 rounded-2xl p-3 sm:p-4 shadow-lg">
                   {['MLB', 'CBASE'].includes(leagueId) ? (
                     <div className="overflow-x-auto">
                       <table className="min-w-full text-sm text-center table-fixed">
@@ -690,7 +689,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
               )}
 
               {boxscoreTab === 'away' && boxscore?.players && (
-                <div className="bg-[#121212] border border-gray-800 rounded-2xl overflow-hidden shadow-lg">
+                <div className="bg-transparent border border-gray-800 rounded-2xl overflow-hidden shadow-lg">
                   {boxscore.players.filter((t: any) => t.team.id === away.team.id).map((teamBox: any, i: number) => (
                     <div key={i} className="flex flex-col">
                       {teamBox.statistics?.map((statGroup: any, statIdx: number) => (
@@ -704,10 +703,10 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
                                 ))}
                               </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-800/50 bg-[#121212]">
+                            <tbody className="divide-y divide-gray-800/50 bg-transparent">
                               {statGroup.athletes?.map((athlete: any, j: number) => (
-                                <tr key={j} className="hover:bg-[#1a1a1a] transition-colors group">
-                                  <td className="px-3 py-2 sm:px-4 sm:py-3 font-semibold text-white sticky left-0 bg-[#121212] group-hover:bg-[#1a1a1a] z-10 transition-colors">
+                                <tr key={j} className="hover:bg-white/5 transition-colors group">
+                                  <td className="px-3 py-2 sm:px-4 sm:py-3 font-semibold text-white sticky left-0 bg-transparent z-10 transition-colors">
                                     <div className="flex items-baseline gap-2 whitespace-nowrap">
                                       {renderPlayerName(athlete)}
                                       <span className="text-[9px] sm:text-[10px] text-gray-500 uppercase font-bold">{athlete.athlete?.position?.abbreviation}</span>
@@ -728,7 +727,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
               )}
 
               {boxscoreTab === 'home' && boxscore?.players && (
-                <div className="bg-[#121212] border border-gray-800 rounded-2xl overflow-hidden shadow-lg">
+                <div className="bg-transparent border border-gray-800 rounded-2xl overflow-hidden shadow-lg">
                   {boxscore.players.filter((t: any) => t.team.id === home.team.id).map((teamBox: any, i: number) => (
                     <div key={i} className="flex flex-col">
                       {teamBox.statistics?.map((statGroup: any, statIdx: number) => (
@@ -742,10 +741,10 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
                                 ))}
                               </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-800/50 bg-[#121212]">
+                            <tbody className="divide-y divide-gray-800/50 bg-transparent">
                               {statGroup.athletes?.map((athlete: any, j: number) => (
-                                <tr key={j} className="hover:bg-[#1a1a1a] transition-colors group">
-                                  <td className="px-3 py-2 sm:px-4 sm:py-3 font-semibold text-white sticky left-0 bg-[#121212] group-hover:bg-[#1a1a1a] z-10 transition-colors">
+                                <tr key={j} className="hover:bg-white/5 transition-colors group">
+                                  <td className="px-3 py-2 sm:px-4 sm:py-3 font-semibold text-white sticky left-0 bg-transparent z-10 transition-colors">
                                     <div className="flex items-baseline gap-2 whitespace-nowrap">
                                       {renderPlayerName(athlete)}
                                       <span className="text-[9px] sm:text-[10px] text-gray-500 uppercase font-bold">{athlete.athlete?.position?.abbreviation}</span>
