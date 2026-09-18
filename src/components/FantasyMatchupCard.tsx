@@ -41,35 +41,33 @@ export const FantasyMatchupCard: React.FC<Props> = ({ league, matchups, rosters,
     <div 
       onClick={onClick}
       className={cn(
-        "card-bg rounded-lg shadow-lg overflow-hidden transition-all transform hover:scale-[1.02] duration-300 cursor-pointer p-3 border",
-        isHighlighted ? "border-[#9df01c] border-2 shadow-[0_0_10px_rgba(157,240,28,0.2)]" : "border-gray-800 hover:border-gray-600"
+        "bg-[#2A2A2A] rounded-xl border p-4 transition-all duration-300 cursor-pointer overflow-hidden group",
+        isHighlighted ? "border-[#9df01c] shadow-[0_0_15px_rgba(157,240,28,0.2)]" : "border-gray-800 hover:border-gray-600"
       )}
     >
-      <div className="flex justify-between items-center mb-3">
-        <div className="flex items-center gap-2 overflow-hidden">
-          <span className="text-xs font-bold text-gray-400 uppercase truncate max-w-[150px]">{league.name}</span>
-          <img src={platformIconUrl} className="w-4 h-4 object-contain flex-shrink-0" alt={league.platform || 'Sleeper'} />
+      <div className="flex items-center justify-between border-b border-gray-800/80 pb-2.5 mb-3">
+        <div className="flex items-center gap-2 truncate">
+          <img src={platformIconUrl} className="w-4 h-4 object-contain" alt={league.platform || 'Sleeper'} />
+          <span className="text-xs font-bold text-gray-400 uppercase tracking-wide truncate">{league.name}</span>
         </div>
-        <span className="accent-text text-xs font-bold uppercase flex-shrink-0">Week {week}</span>
+        <span className="text-xs font-black text-[#9df01c] uppercase tracking-wider ml-2 flex-shrink-0">W{week}</span>
       </div>
+
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3 overflow-hidden">
-            <img src={team1Avatar} alt={team1Name} className="w-8 h-8 rounded-full border border-gray-600 flex-shrink-0" />
-            <div className="flex flex-col overflow-hidden">
-              <span className="font-bold text-sm text-gray-200 truncate">{team1Name}</span>
-            </div>
+          <div className="flex items-center gap-2.5 truncate">
+            <img src={team1Avatar} alt={team1Name} className="w-7 h-7 rounded-full border border-gray-700 object-cover flex-shrink-0" />
+            <span className="font-bold text-sm text-gray-200 truncate">{team1Name}</span>
           </div>
-          <span className="font-bold text-lg text-white">{myMatchup.points?.toFixed(2) || '0.00'}</span>
+          <span className="font-black text-lg text-white ml-2 flex-shrink-0">{myMatchup.points?.toFixed(2) || '0.00'}</span>
         </div>
+
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3 overflow-hidden">
-            <img src={team2Avatar} alt={team2Name} className="w-8 h-8 rounded-full border border-gray-600 flex-shrink-0" />
-            <div className="flex flex-col overflow-hidden">
-              <span className="font-bold text-sm text-gray-200 truncate">{team2Name}</span>
-            </div>
+          <div className="flex items-center gap-2.5 truncate">
+            <img src={team2Avatar} alt={team2Name} className="w-7 h-7 rounded-full border border-gray-700 object-cover flex-shrink-0" />
+            <span className="font-bold text-sm text-gray-400 truncate">{team2Name}</span>
           </div>
-          <span className="font-bold text-lg text-white">{opponentMatchup?.points ? opponentMatchup.points.toFixed(2) : '0.00'}</span>
+          <span className="font-black text-lg text-gray-400 ml-2 flex-shrink-0">{opponentMatchup?.points ? opponentMatchup.points.toFixed(2) : '0.00'}</span>
         </div>
       </div>
     </div>

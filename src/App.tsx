@@ -8,10 +8,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SegmentedControl } from './components/SegmentedControl';
 import { Scoreboard } from './components/Scoreboard';
 import { Fantasy } from './components/Fantasy';
-import { Halftime } from './components/Halftime';
 import { GameDetails } from './components/GameDetails';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from './lib/utils';
+import { useIsMobile } from './hooks/useIsMobile';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -23,6 +23,7 @@ const queryClient = new QueryClient({
 });
 
 export default function App() {
+  const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState('scores');
   const [selectedGame, setSelectedGame] = useState<{ id: string; league: string } | null>(null);
 
@@ -34,7 +35,6 @@ export default function App() {
   const tabs = [
     { id: 'scores', label: 'Scores' },
     { id: 'fantasy', label: 'Fantasy' },
-    { id: 'halftime', label: 'Halftime' },
   ];
 
   const handleTabChange = (tab: string) => {
@@ -45,8 +45,8 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <div className="w-full max-w-full min-h-screen bg-transparent text-gray-200 selection:bg-[#9df01c] selection:text-black no-scrollbar overflow-x-hidden overflow-y-auto">
-        <div className="w-full max-w-7xl mx-auto p-2 sm:p-4 mobile-safe-bottom overflow-x-hidden">
-          <header className="w-full flex flex-col items-center mb-2">
+        <div className={cn("w-full mx-auto p-2 sm:p-4 pb-20 sm:pb-8 overflow-x-hidden", isMobile ? "max-w-full" : "max-w-7xl")}>
+          <header className="w-full flex flex-col items-center mb-4">
             <SegmentedControl
               activeTab={activeTab}
               onTabChange={handleTabChange}
@@ -90,7 +90,6 @@ export default function App() {
                     />
                   )}
                   {activeTab === 'fantasy' && <Fantasy />}
-                  {activeTab === 'halftime' && <Halftime />}
                 </motion.div>
               )}
             </AnimatePresence>

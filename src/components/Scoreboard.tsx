@@ -9,6 +9,7 @@ import { Game } from '../types';
 import { Dropdown } from './Dropdown';
 import { AllSportsIcon, FootballIcon, BasketballIcon, BaseballIcon, HockeyIcon, GolfIcon, SoccerIcon } from './icons';
 import { useIsMobile } from '../hooks/useIsMobile';
+import { cn } from '../lib/utils';
 
 interface ScoreboardProps {
   onSelectGame: (id: string, league: string) => void;
@@ -105,10 +106,10 @@ export const Scoreboard = ({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row justify-between items-center my-4 gap-4">
+      <div className={cn("flex items-center gap-4 mb-6", isMobile ? "flex-col w-full" : "flex-col sm:flex-row justify-between")}>
         {/* League and Sport Filters */}
-        <div className="flex items-center gap-3 w-full sm:w-auto z-30">
-          <div className="relative flex-1 sm:flex-initial sm:w-48">
+        <div className={cn("flex items-center gap-2 z-30", isMobile ? "w-full" : "w-full sm:w-auto")}>
+          <div className={cn("relative", isMobile ? "flex-1" : "w-full sm:w-48")}>
             <Dropdown
               value={selectedSport}
               options={SPORT_OPTIONS}
@@ -116,7 +117,7 @@ export const Scoreboard = ({
             />
           </div>
 
-          <div className="relative flex-1 sm:flex-initial sm:w-40">
+          <div className={cn("relative", isMobile ? "flex-1" : "w-full sm:w-40")}>
             <Dropdown
               value={selectedLeague}
               options={[
@@ -130,7 +131,7 @@ export const Scoreboard = ({
         </div>
 
         {/* Date Navigation */}
-        <div className="flex items-center gap-2 w-full sm:w-auto justify-center sm:justify-end z-10">
+        <div className={cn("flex items-center gap-2 z-10", isMobile ? "w-full justify-center" : "w-full sm:w-auto justify-center sm:justify-end")}>
           <button
             onClick={() => setDate(subDays(date, 1))}
             className="bg-[#2c2c2c] hover:bg-[#374151] px-3 py-2 rounded-lg text-gray-300 transition-colors"
@@ -166,23 +167,24 @@ export const Scoreboard = ({
       </div>
 
       {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+        <div className={cn("grid gap-4", isMobile ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4")}>
           {[...Array(8)].map((_, i) => (
-            <div key={i} className="h-28 bg-[#2A2A2A] animate-pulse rounded-lg border border-gray-800" />
+            <div key={i} className="h-28 bg-[#2A2A2A] animate-pulse rounded-xl border border-gray-800" />
           ))}
         </div>
       ) : games?.length === 0 ? (
-        <div className="text-center py-16 card-bg rounded-lg border border-gray-800">
+        <div className="text-center py-16 bg-[#2A2A2A] rounded-xl border border-gray-800">
           <p className="text-gray-400 font-bold uppercase tracking-widest text-sm">No games scheduled for this date</p>
         </div>
       ) : (
         <div className="space-y-6">
           {LEAGUES.filter(l => groupedGames[l.id]).map(league => (
             <div key={league.id} className="space-y-3">
-              <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight border-b-2 border-gray-700 pb-2 mb-2 uppercase flex items-center gap-2 font-oswald">
-                <span className="accent-text text-sm">●</span> {league.name}
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+              <div className="flex items-center gap-2 border-b border-gray-800 pb-2 mb-3">
+                <div className="w-2.5 h-2.5 rounded-full bg-[#9df01c]" />
+                <h2 className="text-lg font-bold uppercase tracking-wider text-white">{league.name}</h2>
+              </div>
+              <div className={cn("grid gap-4", isMobile ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4")}>
                 {groupedGames[league.id].map(game => (
                   <GameCard 
                     key={game.id} 
