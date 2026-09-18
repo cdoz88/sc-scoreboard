@@ -10,14 +10,27 @@ export function useIsMobile() {
       return true;
     }
 
-    // 2. Physical screen dimension check for phones (regardless of iframe resolution/scale)
-    const minDim = Math.min(window.screen.width, window.screen.height);
-    const isMobileUA = /Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    if (isMobileUA && minDim <= 768) {
+    // 2. Physical screen dimension check for phones and small tablets
+    const screenW = window.screen ? window.screen.width : window.innerWidth;
+    const screenH = window.screen ? window.screen.height : window.innerHeight;
+    const minDim = Math.min(screenW, screenH);
+    
+    // Check mobile user agents
+    const isMobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile/i.test(navigator.userAgent);
+    
+    // Check Apple devices requesting desktop site (Macintosh UA with touch points)
+    const isAppleMobile = /Macintosh/i.test(navigator.userAgent) && (navigator.maxTouchPoints && navigator.maxTouchPoints > 1);
+
+    if ((isMobileUA || isAppleMobile) && minDim <= 820) {
       return true;
     }
 
-    // 3. Fallback to viewport width
+    // 3. Physical screen width <= 500 is unconditionally a phone
+    if (minDim <= 500) {
+      return true;
+    }
+
+    // 4. Fallback to viewport width
     return window.innerWidth < 768;
   });
 
@@ -29,9 +42,18 @@ export function useIsMobile() {
         return;
       }
 
-      const minDim = Math.min(window.screen.width, window.screen.height);
-      const isMobileUA = /Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      if (isMobileUA && minDim <= 768) {
+      const screenW = window.screen ? window.screen.width : window.innerWidth;
+      const screenH = window.screen ? window.screen.height : window.innerHeight;
+      const minDim = Math.min(screenW, screenH);
+      const isMobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile/i.test(navigator.userAgent);
+      const isAppleMobile = /Macintosh/i.test(navigator.userAgent) && (navigator.maxTouchPoints && navigator.maxTouchPoints > 1);
+
+      if ((isMobileUA || isAppleMobile) && minDim <= 820) {
+        setIsMobile(true);
+        return;
+      }
+
+      if (minDim <= 500) {
         setIsMobile(true);
         return;
       }

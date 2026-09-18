@@ -2,10 +2,57 @@
 <html lang="en" class="no-scrollbar" style="background: transparent !important; background-color: transparent !important;">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no, viewport-fit=cover" />
     <title>Sellout Crowds Scoreboard</title>
     <meta name="description" content="Native sports scoreboard and fantasy integration for Sellout Crowds." />
-    <!-- Add iframe-resizer script so the parent window knows our height -->
+    <style>
+      *, *::before, *::after {
+        box-sizing: border-box;
+      }
+      html {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        overflow-x: hidden !important;
+        background: transparent !important;
+        background-color: transparent !important;
+        -webkit-text-size-adjust: 100%;
+        text-size-adjust: 100%;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+      body {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        overflow-x: hidden !important;
+        background: transparent !important;
+        background-color: transparent !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        -webkit-text-size-adjust: 100%;
+        text-size-adjust: 100%;
+      }
+      #root {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        overflow-x: hidden !important;
+        background: transparent !important;
+        background-color: transparent !important;
+      }
+    </style>
+    <!-- Configure iframe-resizer BEFORE loading script so sizeWidth is strictly disabled -->
+    <script>
+      window.iFrameResizer = {
+        targetOrigin: '*',
+        sizeWidth: false,
+        checkOrigin: false,
+        scrolling: false,
+        widthCalculationMethod: 'rightMostElement',
+        heightCalculationMethod: 'lowestElement'
+      };
+    </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/iframe-resizer/4.3.9/iframeResizer.contentWindow.min.js"></script>
   </head>
   <body class="no-scrollbar" style="background: transparent !important; background-color: transparent !important;">
@@ -13,4 +60,5 @@
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
+
 

@@ -146,45 +146,106 @@ export function useFantasy() {
     };
   }, []);
 
-  // Real-time sync with Firestore whenever userId is available
+  // Real-time sync with Firestore (both personal user doc and shared global doc)
   useEffect(() => {
-    if (!userId) return;
+    let unsubs: (() => void)[] = [];
 
-    console.log('[Scoreboard Sync] Subscribing to Firestore updates for user:', userId);
-    const docRef = doc(db, 'artifacts', APP_ID, 'users', userId);
-    const unsubscribe = onSnapshot(docRef, (docSnap) => {
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        if (Array.isArray(data.leagues)) {
-          console.log('[Scoreboard Sync] Loaded', data.leagues.length, 'leagues from Firestore for user:', userId);
-          setSyncedLeagues(data.leagues);
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(data.leagues));
-        }
-      } else {
-        console.log('[Scoreboard Sync] No existing cloud record found for user:', userId);
+    const handleIncomingLeagues = (incoming: any, source: string) => {
+      if (Array.isArray(incoming) && incoming.length > 0) {
+        console.log(`[Scoreboard Sync] Loaded ${incoming.length} leagues from Firestore (${source})`);
+        setSyncedLeagues(prev => {
+          // If we already have the exact same leagues, avoid re-render
+          if (JSON.stringify(prev) === JSON.stringify(incoming)) {
+            return prev;
+          }
+          try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(incoming));
+          } catch {}
+          return incoming;
+        });
       }
-    }, (err) => {
-      console.error('[Scoreboard Sync] Firestore subscription error:', err.code, err.message);
-    });
+    };
 
-    return () => unsubscribe();
+    // 1. Subscribe to shared global sync document (enables cross-device sync across all devices)
+    try {
+      const sharedDocRef = doc(db, 'artifacts', APP_ID, 'shared', 'synced_leagues');
+      const unsubShared = onSnapshot(sharedDocRef, (snap) => {
+        if (snap.exists()) {
+          handleIncomingLeagues(snap.data()?.leagues, 'shared document');
+        } else {
+          // Fallback to default user document
+          const defaultDocRef = doc(db, 'artifacts', APP_ID, 'users', 'default');
+          onSnapshot(defaultDocRef, (defSnap) => {
+            if (defSnap.exists()) {
+              handleIncomingLeagues(defSnap.data()?.leagues, 'default user document');
+            }
+          });
+        }
+      }, (err) => {
+        console.warn('[Scoreboard Sync] Shared doc subscription note:', err.message);
+      });
+      unsubs.push(unsubShared);
+    } catch (e) {
+      console.warn('[Scoreboard Sync] Could not subscribe to shared doc:', e);
+    }
+
+    // 2. Subscribe to user-specific document if userId exists
+    if (userId) {
+      try {
+        console.log('[Scoreboard Sync] Subscribing to Firestore updates for user:', userId);
+        const userDocRef = doc(db, 'artifacts', APP_ID, 'users', userId);
+        const unsubUser = onSnapshot(userDocRef, (snap) => {
+          if (snap.exists()) {
+            handleIncomingLeagues(snap.data()?.leagues, `user ${userId}`);
+          }
+        }, (err) => {
+          console.warn('[Scoreboard Sync] User doc subscription error:', err.message);
+        });
+        unsubs.push(unsubUser);
+      } catch (e) {
+        console.warn('[Scoreboard Sync] Could not subscribe to user doc:', e);
+      }
+    }
+
+    return () => {
+      unsubs.forEach(u => u());
+    };
   }, [userId]);
 
   const saveToFirebase = useCallback(async (leagues: SleeperLeague[]) => {
     const currentId = activeUserIdRef.current;
-    if (!currentId) {
-      console.warn('[Scoreboard Sync] Cannot save to Firebase: No active userId yet.');
-      return;
-    }
     try {
-      console.log('[Scoreboard Sync] Saving', leagues.length, 'leagues to Firestore for user:', currentId);
-      const docRef = doc(db, 'artifacts', APP_ID, 'users', currentId);
-      await setDoc(docRef, { leagues, updatedAt: Date.now() }, { merge: true });
-      console.log('[Scoreboard Sync] Successfully saved leagues to Firestore!');
+      console.log('[Scoreboard Sync] Saving', leagues.length, 'leagues to Firestore...');
+      
+      // 1. Always save to the shared global document for automatic cross-device sync
+      const sharedDocRef = doc(db, 'artifacts', APP_ID, 'shared', 'synced_leagues');
+      await setDoc(sharedDocRef, { leagues, updatedAt: Date.now() }, { merge: true });
+
+      // 2. Also write to default user doc as backup
+      const defaultDocRef = doc(db, 'artifacts', APP_ID, 'users', 'default');
+      await setDoc(defaultDocRef, { leagues, updatedAt: Date.now() }, { merge: true });
+
+      // 3. If user has a specific ID (from URL, token, or session), also save to their document
+      if (currentId && currentId !== 'default') {
+        const userDocRef = doc(db, 'artifacts', APP_ID, 'users', currentId);
+        await setDoc(userDocRef, { leagues, updatedAt: Date.now() }, { merge: true });
+      }
+
+      console.log('[Scoreboard Sync] Successfully saved leagues to Firestore (shared + user)!');
     } catch (err: any) {
       console.error('[Scoreboard Sync] Failed to save to Firebase:', err.code, err.message);
     }
   }, []);
+
+  // When initial local leagues exist, ensure they are seeded to the shared cloud document once auth is ready
+  useEffect(() => {
+    if (syncedLeagues.length > 0) {
+      const timer = setTimeout(() => {
+        saveToFirebase(syncedLeagues);
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [saveToFirebase]);
 
   const syncLeague = async (username: string) => {
     setIsLoading(true);

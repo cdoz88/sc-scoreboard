@@ -42,9 +42,9 @@ export default function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="min-h-screen bg-transparent text-gray-200 selection:bg-[#9df01c] selection:text-black no-scrollbar overflow-y-auto">
-        <div className="max-w-7xl mx-auto p-2 sm:p-4 pb-28 sm:pb-8">
-          <header className="flex flex-col items-center mb-4">
+      <div className="w-full max-w-full min-h-screen bg-transparent text-gray-200 selection:bg-[#9df01c] selection:text-black no-scrollbar overflow-x-hidden overflow-y-auto">
+        <div className="w-full max-w-full sm:max-w-7xl mx-auto p-2 sm:p-4 pb-28 sm:pb-8 overflow-x-hidden">
+          <header className="w-full flex flex-col items-center mb-4">
             <SegmentedControl
               activeTab={activeTab}
               onTabChange={handleTabChange}
@@ -52,7 +52,7 @@ export default function App() {
             />
           </header>
 
-          <main>
+          <main className="w-full max-w-full overflow-x-hidden">
             <AnimatePresence mode="wait">
               {selectedGame ? (
                 <motion.div
