@@ -15,6 +15,3 @@ const firebaseConfig = {
 export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
-
-// Initialize anonymous auth by default to tie devices to a session
-signInAnonymously(auth).catch(console.error);

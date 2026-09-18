@@ -22,7 +22,21 @@ export function useFantasy() {
   const [userId, setUserId] = useState<string | null>(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
-      return params.get('userId') || params.get('uid') || localStorage.getItem('fsan_user_id');
+      const urlId = params.get('userId') || params.get('uid');
+      if (urlId) {
+        try {
+          localStorage.setItem('fsan_user_id', urlId);
+        } catch {}
+        console.log('[Scoreboard Sync] Found userId in URL:', urlId);
+        return urlId;
+      }
+      try {
+        const stored = localStorage.getItem('fsan_user_id');
+        if (stored) {
+          console.log('[Scoreboard Sync] Found userId in localStorage:', stored);
+          return stored;
+        }
+      } catch {}
     }
     return null;
   });
@@ -30,16 +44,20 @@ export function useFantasy() {
   const activeUserIdRef = useRef<string | null>(userId);
   activeUserIdRef.current = userId;
 
-  // Listen for user ID from parent window via postMessage
+  // Sync state if URL changes or postMessage arrives
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       if (event.data?.type === 'SET_USER_ID' && event.data?.userId) {
+        console.log('[Scoreboard Sync] Received SET_USER_ID via postMessage:', event.data.userId);
         setUserId(event.data.userId);
-        localStorage.setItem('fsan_user_id', event.data.userId);
+        activeUserIdRef.current = event.data.userId;
+        try {
+          localStorage.setItem('fsan_user_id', event.data.userId);
+        } catch {}
       }
       if (event.data?.type === 'SET_FIREBASE_TOKEN' && event.data?.token) {
         signInWithCustomToken(auth, event.data.token).catch(err => {
-          console.warn('Could not sign in with parent token', err);
+          console.warn('[Scoreboard Sync] Could not sign in with parent token:', err);
         });
       }
     };
@@ -47,7 +65,7 @@ export function useFantasy() {
     return () => window.removeEventListener('message', handleMessage);
   }, []);
 
-  // Authenticate with Firebase
+  // Authenticate with Firebase (Anonymous auth for session)
   useEffect(() => {
     let isMounted = true;
 
@@ -58,49 +76,26 @@ export function useFantasy() {
       if (urlToken) {
         try {
           await signInWithCustomToken(auth, urlToken);
+          console.log('[Scoreboard Sync] Authenticated with custom token from URL');
           return;
         } catch (e) {
-          console.warn('URL custom token sign-in failed', e);
+          console.warn('[Scoreboard Sync] URL custom token sign-in failed:', e);
         }
       }
 
-      // 2. Try WordPress token endpoints
-      const endpoints = [
-        '/generate-firebase-token.php',
-        'https://www.selloutcrowds.com/generate-firebase-token.php',
-        'https://selloutcrowds.com/generate-firebase-token.php'
-      ];
-
-      for (const endpoint of endpoints) {
-        try {
-          const res = await fetch(endpoint, { credentials: 'include' });
-          if (res.ok) {
-            const text = await res.text();
-            if (text.trim().startsWith('{')) {
-              const data = JSON.parse(text);
-              if (data.token) {
-                await signInWithCustomToken(auth, data.token);
-                return;
-              }
-            }
-          }
-        } catch {
-          // Continue to next endpoint
-        }
-      }
-
-      // 3. Fallback to anonymous sign-in
+      // 2. Sign in anonymously to establish a valid Firebase Auth session
       try {
-        await signInAnonymously(auth);
+        const cred = await signInAnonymously(auth);
+        console.log('[Scoreboard Sync] Firebase anonymous auth connected:', cred.user.uid);
       } catch (e: any) {
         if (e?.code === 'auth/requests-from-referer-are-blocked' || e?.message?.includes('requests-from-referer')) {
           console.warn(
-            '[Firebase Auth Warning] Domain blocked by Firebase API Key restrictions. ' +
-            'Please add your current domain to Authorized Domains in Firebase Console and Google Cloud API Credentials: ' +
+            '[Scoreboard Sync] Domain blocked by Firebase API Key restrictions. ' +
+            'Please verify both Authorized Domains in Firebase Auth AND Website Restrictions in Google Cloud API Credentials for: ' +
             window.location.origin
           );
         } else {
-          console.warn('Firebase anonymous authentication warning:', e?.message || e);
+          console.warn('[Scoreboard Sync] Firebase auth status:', e?.message || e);
         }
       }
     };
@@ -110,7 +105,11 @@ export function useFantasy() {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (!isMounted) return;
       if (user) {
-        setUserId(prev => prev || user.uid);
+        setUserId(prev => {
+          const finalId = prev || user.uid;
+          activeUserIdRef.current = finalId;
+          return finalId;
+        });
       }
     });
 
@@ -124,17 +123,21 @@ export function useFantasy() {
   useEffect(() => {
     if (!userId) return;
 
+    console.log('[Scoreboard Sync] Subscribing to Firestore updates for user:', userId);
     const docRef = doc(db, 'artifacts', APP_ID, 'users', userId);
     const unsubscribe = onSnapshot(docRef, (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data();
         if (Array.isArray(data.leagues)) {
+          console.log('[Scoreboard Sync] Loaded', data.leagues.length, 'leagues from Firestore for user:', userId);
           setSyncedLeagues(data.leagues);
           localStorage.setItem(STORAGE_KEY, JSON.stringify(data.leagues));
         }
+      } else {
+        console.log('[Scoreboard Sync] No existing cloud record found for user:', userId);
       }
     }, (err) => {
-      console.warn('Firestore snapshot listener error:', err.message);
+      console.error('[Scoreboard Sync] Firestore subscription error:', err.code, err.message);
     });
 
     return () => unsubscribe();
@@ -142,12 +145,17 @@ export function useFantasy() {
 
   const saveToFirebase = useCallback(async (leagues: SleeperLeague[]) => {
     const currentId = activeUserIdRef.current;
-    if (!currentId) return;
+    if (!currentId) {
+      console.warn('[Scoreboard Sync] Cannot save to Firebase: No active userId yet.');
+      return;
+    }
     try {
+      console.log('[Scoreboard Sync] Saving', leagues.length, 'leagues to Firestore for user:', currentId);
       const docRef = doc(db, 'artifacts', APP_ID, 'users', currentId);
       await setDoc(docRef, { leagues, updatedAt: Date.now() }, { merge: true });
-    } catch (err) {
-      console.warn('Error saving to Firebase:', err);
+      console.log('[Scoreboard Sync] Successfully saved leagues to Firestore!');
+    } catch (err: any) {
+      console.error('[Scoreboard Sync] Failed to save to Firebase:', err.code, err.message);
     }
   }, []);
 
