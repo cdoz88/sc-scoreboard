@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export type Sport = 'football' | 'basketball' | 'baseball' | 'hockey' | 'golf' | 'soccer';
+export type Sport = 'football' | 'basketball' | 'baseball' | 'hockey' | 'golf' | 'soccer' | 'racing';
 
 export interface League {
   id: string;

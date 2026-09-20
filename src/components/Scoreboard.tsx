@@ -223,7 +223,7 @@ export const Scoreboard = ({
           {LEAGUES.filter(l => groupedGames[l.id]).map(league => (
             <div key={league.id} className="space-y-4">
               <div className="flex items-center gap-2 border-b border-gray-800 pb-2">
-                <div className="w-3 h-3 rounded-full bg-gradient-to-br from-gray-300 to-gray-500 shadow-sm" />
+                <div className="w-3 h-3 rounded-full bg-[#9df01c] shadow-sm" />
                 <h2 className="text-xl font-black uppercase tracking-widest">{league.name}</h2>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">

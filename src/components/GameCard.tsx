@@ -72,7 +72,8 @@ export const GameCard = ({ game, onClick }: GameCardProps) => {
   const isLive = game.status.state === 'in';
   const isPost = game.status.state === 'post';
 
-  if (game.league === 'PGA' && game.golfCompetitors) {
+  // Render leaderboard card for Golf and Racing (NASCAR/F1)
+  if (['PGA', 'NASCAR', 'F1'].includes(game.league) && game.golfCompetitors) {
     const eventName = game.shortName || game.name || 'Event';
     const top3Competitors = game.golfCompetitors.slice(0, 3);
     
@@ -84,16 +85,57 @@ export const GameCard = ({ game, onClick }: GameCardProps) => {
         <div className="p-3 flex flex-col h-full">
           <div className="flex justify-between items-start text-xs uppercase font-bold mb-2">
             <span className="text-gray-500">{game.league}</span>
-            <span className="text-[#9df01c] text-right">{game.status.detail}</span>
+            <span className={cn(
+              "text-right",
+              isLive ? "text-[#9df01c]" : isPre ? "text-white" : "text-gray-400"
+            )}>
+              {game.status.detail}
+            </span>
           </div>
           <div className="font-bold text-white text-base leading-tight mb-3">{eventName}</div>
-          <div className="space-y-1.5">
-            {top3Competitors.map((c: any, i: number) => (
-              <div key={i} className="flex justify-between text-sm items-center">
-                <span className="text-gray-300 truncate pr-2">{c.athlete?.displayName || c.team?.displayName}</span>
-                <span className="font-bold text-white bg-[#1f2937] px-1.5 rounded">{c.score || '-'}</span>
-              </div>
-            ))}
+          <div className="space-y-1.5 mt-auto">
+            {top3Competitors.map((c: any, i: number) => {
+              const getDynamicStat = (keywords: string[]) => {
+                 const arr = c.statistics || c.stats || c.athlete?.statistics || c.athlete?.stats || [];
+                 const stat = arr.find((s: any) => keywords.some(k => (s.name||'').toLowerCase().includes(k) || (s.label||'').toLowerCase().includes(k) || (s.abbreviation||'').toLowerCase().includes(k)));
+                 if (stat) return stat.displayValue ?? stat.value;
+                 
+                 const key = Object.keys(c).find(k => keywords.some(kw => k.toLowerCase().includes(kw)));
+                 if (key) return c[key];
+                 
+                 return null;
+              };
+              
+              let carNum = c.athlete?.jersey || c.car || getDynamicStat(['car']);
+              if (carNum === '-') carNum = '';
+              const displayCar = carNum ? `#${carNum}` : '';
+              
+              let rightSide = '-';
+              if (['NASCAR', 'F1'].includes(game.league)) {
+                 const pts = getDynamicStat(['point', 'pts', 'score']);
+                 const time = getDynamicStat(['tot', 'time']);
+                 const laps = getDynamicStat(['lap']);
+                 const fallbackStatus = c.status?.displayValue || c.reason?.displayValue || c.status?.type?.detail || (c.order === 1 ? 'Winner' : 'Finished');
+                 
+                 if (isPre) rightSide = displayCar || '-';
+                 else if (isLive) rightSide = laps ? `L: ${laps}` : 'Running';
+                 else rightSide = pts ? `${pts} pts` : (c.score ? `${c.score} pts` : (time ? time : fallbackStatus));
+              } else {
+                 const pointsStat = c.statistics?.find((s: any) => s.name === 'points');
+                 rightSide = c.score ?? c.points ?? pointsStat?.displayValue ?? c.statistics?.[0]?.displayValue ?? c.linescores?.[0]?.value ?? '-';
+              }
+
+              return (
+                <div key={i} className="flex justify-between text-sm items-center">
+                  <div className="flex items-center gap-1.5 truncate pr-2">
+                     <span className="text-gray-500 font-bold text-xs w-4">{c.order || i+1}.</span>
+                     <span className="text-gray-200 font-bold truncate">{c.athlete?.shortName || c.athlete?.displayName || c.team?.displayName}</span>
+                     {['NASCAR', 'F1'].includes(game.league) && displayCar && <span className="text-[10px] text-gray-500 font-mono ml-1">{displayCar}</span>}
+                  </div>
+                  <span className="font-bold text-white bg-[#1f2937] px-1.5 py-0.5 rounded whitespace-nowrap uppercase">{rightSide}</span>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -116,7 +158,7 @@ export const GameCard = ({ game, onClick }: GameCardProps) => {
         <div className="ml-4 flex flex-col items-end justify-center min-w-[60px]">
           <span className={cn(
             "text-xs font-bold uppercase tracking-widest text-right",
-            isLive ? "text-[#9df01c] animate-pulse" : isPre ? "text-[#9df01c]" : "text-gray-400"
+            isLive ? "text-[#9df01c]" : isPre ? "text-white" : "text-gray-400"
           )}>
             {isPre ? formatGameTime(game.date) : game.status.detail}
           </span>
