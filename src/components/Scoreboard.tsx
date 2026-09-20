@@ -151,7 +151,7 @@ export const Scoreboard = ({
   }, [games]);
 
   return (
-    <div className="space-y-6 min-h-[450px]">
+    <div className="space-y-6 min-h-[450px] pb-[100px] sm:pb-0">
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-8">
         <div className="flex items-center gap-2 w-full sm:w-auto z-30">
           <div className="relative w-full sm:w-48">
@@ -178,14 +178,14 @@ export const Scoreboard = ({
         <div className="relative flex items-center gap-2 w-full sm:w-auto justify-center sm:justify-end z-50" ref={calendarRef}>
           <button
             onClick={() => setDate(subDays(date, 1))}
-            className="p-2.5 bg-[#2c2c2c] hover:bg-[#374151] rounded-lg transition-colors text-gray-300"
+            className="p-2.5 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors text-gray-300"
           >
             <ChevronLeft size={16} />
           </button>
           
           <button
             onClick={() => setIsCalendarOpen(!isCalendarOpen)}
-            className="flex items-center justify-center gap-2 w-32 px-4 py-2.5 bg-[#2c2c2c] hover:bg-[#374151] rounded-lg transition-colors font-bold text-sm text-gray-200 uppercase tracking-wide cursor-pointer"
+            className="flex items-center justify-center gap-2 w-32 px-4 py-2.5 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors font-bold text-sm text-gray-200 uppercase tracking-wide cursor-pointer"
           >
             <span className="pointer-events-none">{isToday(date) ? 'TODAY' : format(date, 'MMM d')}</span>
             <ChevronDown size={14} className="text-gray-400 pointer-events-none" />
@@ -193,7 +193,7 @@ export const Scoreboard = ({
 
           <button
             onClick={() => setDate(addDays(date, 1))}
-            className="p-2.5 bg-[#2c2c2c] hover:bg-[#374151] rounded-lg transition-colors text-gray-300"
+            className="p-2.5 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors text-gray-300"
           >
             <ChevronRight size={16} />
           </button>
