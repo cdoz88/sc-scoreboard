@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" class="no-scrollbar" style="background: transparent !important; background-color: transparent !important;">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
@@ -8,47 +8,19 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    
     <style>
-      *, *::before, *::after {
-        box-sizing: border-box;
-      }
-      /* The 100vw width and overflow-x hidden fixes the iOS iframe zoom bug */
-      html, body {
-        width: 100vw !important;
-        max-width: 100% !important;
-        min-width: 0 !important;
-        overflow-x: hidden !important;
-        background: transparent !important;
-        background-color: transparent !important;
-        -webkit-text-size-adjust: 100%;
-        text-size-adjust: 100%;
-        margin: 0 !important;
-        padding: 0 !important;
+      body {
         font-family: 'Inter', sans-serif;
+        background-color: transparent !important;
+        margin: 0;
+        padding: 0;
       }
-      #root {
-        width: 100vw !important;
-        max-width: 100% !important;
-        overflow-x: hidden !important;
-        background: transparent !important;
+      html {
         background-color: transparent !important;
       }
     </style>
-
-    <!-- Restored iframe-resizer to fix the height getting cut off -->
-    <script>
-      window.iFrameResizer = {
-        targetOrigin: '*',
-        sizeWidth: false,
-        checkOrigin: false,
-        scrolling: false,
-        heightCalculationMethod: 'bodyOffset'
-      };
-    </script>
-    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/iframe-resizer/4.3.9/iframeResizer.contentWindow.min.js"></script>
   </head>
-  <body class="no-scrollbar" style="background: transparent !important; background-color: transparent !important;">
+  <body class="text-gray-200">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
