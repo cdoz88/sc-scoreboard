@@ -1,3 +1,8 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import React, { useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SegmentedControl } from './components/SegmentedControl';
@@ -31,14 +36,20 @@ export default function App() {
     { id: 'fantasy', label: 'Fantasy' },
   ];
 
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    setSelectedGame(null); 
+  };
+
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="w-full bg-transparent text-gray-200 selection:bg-[#9df01c] selection:text-black">
-        <div className={cn("w-full mx-auto p-2 sm:p-4 pb-[100px]", isMobile ? "max-w-full" : "max-w-7xl")}>
+      {/* INTERNAL SCROLL CONTAINER: This resurrects Sticky Headers and prevents the iframe from expanding/clipping */}
+      <div className="absolute inset-0 w-full h-full overflow-y-auto overflow-x-hidden bg-transparent text-gray-200 selection:bg-[#9df01c] selection:text-black">
+        <div className={cn("w-full mx-auto p-2 sm:p-4 pb-24", isMobile ? "max-w-full" : "max-w-7xl")}>
           <header className="w-full flex flex-col items-center mb-4">
             <SegmentedControl
               activeTab={activeTab}
-              onTabChange={(tab) => { setActiveTab(tab); setSelectedGame(null); }}
+              onTabChange={handleTabChange}
               tabs={tabs}
             />
           </header>
