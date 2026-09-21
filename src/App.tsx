@@ -1,8 +1,3 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import React, { useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SegmentedControl } from './components/SegmentedControl';
@@ -43,58 +38,56 @@ export default function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* INTERNAL SCROLL CONTAINER: This resurrects Sticky Headers and prevents the iframe from expanding/clipping */}
-      <div className="absolute inset-0 w-full h-full overflow-y-auto overflow-x-hidden bg-transparent text-gray-200 selection:bg-[#9df01c] selection:text-black">
-        <div className={cn("w-full mx-auto p-2 sm:p-4 pb-24", isMobile ? "max-w-full" : "max-w-7xl")}>
-          <header className="w-full flex flex-col items-center mb-4">
-            <SegmentedControl
-              activeTab={activeTab}
-              onTabChange={handleTabChange}
-              tabs={tabs}
-            />
-          </header>
+      {/* Removed ALL absolute, h-screen, and overflow constraints. Let the document flow naturally. */}
+      <div className={cn("mx-auto p-2 sm:p-4 pb-[100px]", isMobile ? "w-full" : "max-w-7xl")}>
+        <header className="flex flex-col items-center mb-4">
+          <SegmentedControl
+            activeTab={activeTab}
+            onTabChange={handleTabChange}
+            tabs={tabs}
+          />
+        </header>
 
-          <main className="w-full">
-            <AnimatePresence mode="wait">
-              {selectedGame ? (
-                <motion.div
-                  key="details"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <GameDetails 
-                    gameId={selectedGame.id} 
-                    leagueId={selectedGame.league} 
-                    onBack={() => setSelectedGame(null)} 
+        <main>
+          <AnimatePresence mode="wait">
+            {selectedGame ? (
+              <motion.div
+                key="details"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.2 }}
+              >
+                <GameDetails 
+                  gameId={selectedGame.id} 
+                  leagueId={selectedGame.league} 
+                  onBack={() => setSelectedGame(null)} 
+                />
+              </motion.div>
+            ) : (
+              <motion.div
+                key={activeTab}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+              >
+                {activeTab === 'scores' && (
+                  <Scoreboard 
+                    onSelectGame={(id, league) => setSelectedGame({ id, league })} 
+                    date={scoreboardDate}
+                    setDate={setScoreboardDate}
+                    selectedSport={selectedSport}
+                    setSelectedSport={setSelectedSport}
+                    selectedLeague={selectedLeague}
+                    setSelectedLeague={setSelectedLeague}
                   />
-                </motion.div>
-              ) : (
-                <motion.div
-                  key={activeTab}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.2, ease: "easeOut" }}
-                >
-                  {activeTab === 'scores' && (
-                    <Scoreboard 
-                      onSelectGame={(id, league) => setSelectedGame({ id, league })} 
-                      date={scoreboardDate}
-                      setDate={setScoreboardDate}
-                      selectedSport={selectedSport}
-                      setSelectedSport={setSelectedSport}
-                      selectedLeague={selectedLeague}
-                      setSelectedLeague={setSelectedLeague}
-                    />
-                  )}
-                  {activeTab === 'fantasy' && <Fantasy />}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </main>
-        </div>
+                )}
+                {activeTab === 'fantasy' && <Fantasy />}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </main>
       </div>
     </QueryClientProvider>
   );
