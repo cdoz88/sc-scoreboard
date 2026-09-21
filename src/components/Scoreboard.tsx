@@ -8,6 +8,7 @@ import { CalendarPicker } from './CalendarPicker';
 import { Game } from '../types';
 import { Dropdown } from './Dropdown';
 import { AllSportsIcon, FootballIcon, BasketballIcon, BaseballIcon, HockeyIcon, GolfIcon, SoccerIcon, RacingIcon } from './icons';
+import { useIsMobile } from '../hooks/useIsMobile';
 
 interface ScoreboardProps {
   onSelectGame: (id: string, league: string) => void;
@@ -39,8 +40,25 @@ export const Scoreboard = ({
   selectedLeague,
   setSelectedLeague
 }: ScoreboardProps) => {
+  const isMobile = useIsMobile();
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const calendarRef = useRef<HTMLDivElement>(null);
+
+  // Structural overrides that forcefully dismantle desktop layouts on mobile
+  const gridClass = isMobile 
+    ? "grid grid-cols-1 gap-4" 
+    : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4";
+
+  const headerClass = isMobile 
+    ? "flex flex-col gap-4 mb-6" 
+    : "flex flex-col sm:flex-row justify-between items-center gap-4 mb-8";
+
+  const dropdownGroupClass = isMobile 
+    ? "flex flex-col w-full gap-3 z-30" 
+    : "flex items-center gap-2 w-full sm:w-auto z-30";
+
+  const dropdownSportClass = isMobile ? "relative w-full" : "relative w-full sm:w-48";
+  const dropdownLeagueClass = isMobile ? "relative w-full" : "relative w-full sm:w-40";
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -148,9 +166,9 @@ export const Scoreboard = ({
 
   return (
     <div className="space-y-6 pb-[100px] sm:pb-0">
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-8">
-        <div className="flex items-center gap-2 w-full sm:w-auto z-30">
-          <div className="relative w-full sm:w-48">
+      <div className={headerClass}>
+        <div className={dropdownGroupClass}>
+          <div className={dropdownSportClass}>
             <Dropdown
               value={selectedSport}
               options={SPORT_OPTIONS}
@@ -158,7 +176,7 @@ export const Scoreboard = ({
             />
           </div>
 
-          <div className="relative w-full sm:w-40">
+          <div className={dropdownLeagueClass}>
             <Dropdown
               value={selectedLeague}
               options={[
@@ -205,7 +223,7 @@ export const Scoreboard = ({
       </div>
 
       {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div className={gridClass}>
           {[...Array(8)].map((_, i) => (
             <div key={i} className="h-40 bg-gray-800/50 animate-pulse rounded-xl border border-gray-700/50" />
           ))}
@@ -222,7 +240,7 @@ export const Scoreboard = ({
                 <div className="w-3 h-3 rounded-full bg-[#9df01c] shadow-sm" />
                 <h2 className="text-xl font-black uppercase tracking-widest">{league.name}</h2>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              <div className={gridClass}>
                 {groupedGames[league.id].map(game => (
                   <GameCard 
                     key={game.id} 
