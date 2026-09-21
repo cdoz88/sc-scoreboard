@@ -9,12 +9,21 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     
     <style>
+      /* Safe, standard constraints to prevent iOS Webviews from expanding the width */
       html, body {
+        width: 100%;
+        max-width: 100%;
+        overflow-x: hidden;
         background-color: transparent !important;
         margin: 0;
         padding: 0;
         font-family: 'Inter', sans-serif;
         -webkit-text-size-adjust: 100%;
+      }
+      #root {
+        width: 100%;
+        max-width: 100%;
+        overflow-x: hidden;
       }
     </style>
 
@@ -24,14 +33,14 @@
         sizeWidth: false,
         checkOrigin: false,
         scrolling: false,
-        /* lowestElement is critical for React apps because it waits for the async games to load */
+        /* lowestElement waits for the async games to load before calculating height */
         heightCalculationMethod: 'lowestElement' 
       };
     </script>
-    <!-- FIXED 404 ERROR: Swapped dead CDN link for a highly reliable JSDelivr link -->
+    <!-- FIXED 404 ERROR: Swapped dead link for a highly reliable JSDelivr CDN link -->
     <script defer src="https://cdn.jsdelivr.net/npm/iframe-resizer@4.3.9/js/iframeResizer.contentWindow.min.js"></script>
   </head>
-  <body class="text-gray-200 antialiased">
+  <body class="text-gray-200 antialiased no-scrollbar">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

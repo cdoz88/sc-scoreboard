@@ -5,8 +5,6 @@ import { Scoreboard } from './components/Scoreboard';
 import { Fantasy } from './components/Fantasy';
 import { GameDetails } from './components/GameDetails';
 import { motion, AnimatePresence } from 'motion/react';
-import { cn } from './lib/utils';
-import { useIsMobile } from './hooks/useIsMobile';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -18,7 +16,6 @@ const queryClient = new QueryClient({
 });
 
 export default function App() {
-  const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState('scores');
   const [selectedGame, setSelectedGame] = useState<{ id: string; league: string } | null>(null);
 
@@ -38,9 +35,9 @@ export default function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Removed ALL overflow constraints. This resurrects the sticky header. */}
       <div className="w-full bg-transparent text-gray-200 selection:bg-[#9df01c] selection:text-black">
-        <div className={cn("w-full mx-auto p-2 sm:p-4 pb-[100px]", isMobile ? "max-w-full" : "max-w-7xl")}>
+        {/* THE FIX: Removed the useIsMobile trap. Used pure responsive CSS to force proper mobile sizing. */}
+        <div className="w-full mx-auto p-2 sm:p-4 pb-[100px] max-w-full md:max-w-7xl">
           <header className="w-full flex flex-col items-center mb-4">
             <SegmentedControl
               activeTab={activeTab}
