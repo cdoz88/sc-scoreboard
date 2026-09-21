@@ -1,27 +1,14 @@
 @import "tailwindcss";
 
-/* iOS IFRAME WIDTH FIX: Defeats the 980px zoom bug */
-html, body {
-  width: 1px !important;
-  min-width: 100% !important;
-  max-width: 100% !important;
-  overflow-x: hidden !important;
-  background-color: transparent !important;
-  -webkit-text-size-adjust: 100%;
-}
-
-#root {
-  width: 100% !important;
-  height: 100% !important;
-  overflow-x: hidden !important;
-}
-
-/* Hide scrollbars globally */
+/* Force transparent backgrounds globally */
 :root, html, body, #root {
+  background-color: transparent !important;
+  background: transparent !important;
   -ms-overflow-style: none !important;
   scrollbar-width: none !important;
 }
 
+/* Hide scrollbars globally */
 *::-webkit-scrollbar,
 html::-webkit-scrollbar,
 body::-webkit-scrollbar,

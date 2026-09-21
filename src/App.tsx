@@ -1,8 +1,3 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import React, { useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SegmentedControl } from './components/SegmentedControl';
@@ -27,7 +22,6 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('scores');
   const [selectedGame, setSelectedGame] = useState<{ id: string; league: string } | null>(null);
 
-  // Lifted Scoreboard state
   const [scoreboardDate, setScoreboardDate] = useState(new Date());
   const [selectedSport, setSelectedSport] = useState<string>('ALL SPORTS');
   const [selectedLeague, setSelectedLeague] = useState<string>('ALL');
@@ -44,9 +38,8 @@ export default function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* RESTORED h-screen and overflow-y-auto to fix the cut-off height issue */}
-      <div className="w-full h-screen overflow-y-auto overflow-x-hidden bg-transparent text-gray-200 selection:bg-[#9df01c] selection:text-black no-scrollbar">
-        <div className={cn("w-full mx-auto p-2 sm:p-4 pb-24 sm:pb-8", isMobile ? "max-w-full" : "max-w-7xl")}>
+      <div className="w-full max-w-full overflow-x-hidden bg-transparent text-gray-200 selection:bg-[#9df01c] selection:text-black">
+        <div className={cn("w-full mx-auto p-2 sm:p-4 pb-[100px]", isMobile ? "max-w-full" : "max-w-7xl")}>
           <header className="w-full flex flex-col items-center mb-4">
             <SegmentedControl
               activeTab={activeTab}
@@ -55,7 +48,7 @@ export default function App() {
             />
           </header>
 
-          <main className="w-full">
+          <main className="w-full max-w-full overflow-x-hidden">
             <AnimatePresence mode="wait">
               {selectedGame ? (
                 <motion.div
