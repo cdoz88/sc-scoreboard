@@ -144,7 +144,8 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
 
     return (
       <div className="max-w-5xl mx-auto pb-16 sm:pb-24">
-        <div className="sticky top-0 z-20 bg-[#000000] pt-6 pb-4 border-b border-gray-800">
+        {/* Back to bg-transparent for racing header */}
+        <div className="sticky top-0 z-20 bg-transparent pt-6 pb-2">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <button 
@@ -333,7 +334,8 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
 
   return (
     <div className="max-w-4xl mx-auto pb-16 sm:pb-24">
-      <div className="sticky top-0 z-20 bg-[#000000] pt-6 pb-2">
+      {/* Back to bg-transparent for main header */}
+      <div className="sticky top-0 z-20 bg-transparent pt-6 pb-2">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <button 
@@ -529,8 +531,9 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
                   )}
                 >
                   <img src={getTeamLogo(away.team)} className="w-4 h-4 object-contain hidden sm:block" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.src = `https://placehold.co/48x48/1f2937/ffffff?text=${away.team.abbreviation || '?'}` }} />
+                  {/* Prioritized abbreviation for mobile views */}
                   <span className="hidden sm:inline">{away.team.displayName || away.team.name || away.team.abbreviation}</span>
-                  <span className="sm:hidden">{away.team.name || away.team.abbreviation}</span>
+                  <span className="sm:hidden">{away.team.abbreviation || away.team.name}</span>
                 </button>
                 <button
                   onClick={() => setBoxscoreTab('home')}
@@ -540,8 +543,9 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
                   )}
                 >
                   <img src={getTeamLogo(home.team)} className="w-4 h-4 object-contain hidden sm:block" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.src = `https://placehold.co/48x48/1f2937/ffffff?text=${home.team.abbreviation || '?'}` }} />
+                  {/* Prioritized abbreviation for mobile views */}
                   <span className="hidden sm:inline">{home.team.displayName || home.team.name || home.team.abbreviation}</span>
-                  <span className="sm:hidden">{home.team.name || home.team.abbreviation}</span>
+                  <span className="sm:hidden">{home.team.abbreviation || home.team.name}</span>
                 </button>
               </div>
 

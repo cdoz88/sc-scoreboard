@@ -9,6 +9,7 @@ import { Game } from '../types';
 import { Dropdown } from './Dropdown';
 import { AllSportsIcon, FootballIcon, BasketballIcon, BaseballIcon, HockeyIcon, GolfIcon, SoccerIcon, RacingIcon } from './icons';
 import { useIsMobile } from '../hooks/useIsMobile';
+import { cn } from '../lib/utils';
 
 interface ScoreboardProps {
   onSelectGame: (id: string, league: string) => void;
@@ -52,7 +53,6 @@ export const Scoreboard = ({
     ? "flex flex-col gap-4 mb-6" 
     : "flex flex-col sm:flex-row justify-between items-center gap-4 mb-8";
 
-  // FIX 1: Bumped the dropdown container to z-50 so it sits on top
   const dropdownGroupClass = isMobile 
     ? "flex flex-col w-full gap-3 z-50" 
     : "flex items-center gap-2 w-full sm:w-auto z-50";
@@ -99,24 +99,10 @@ export const Scoreboard = ({
   const handleSportChange = (value: string) => {
     setSelectedSport(value);
     setSelectedLeague('ALL');
-    
-    if (typeof window !== 'undefined') {
-        const url = new URL(window.location.href);
-        url.searchParams.set('sport', value);
-        url.searchParams.set('league', 'ALL');
-        window.history.replaceState({}, '', url.toString());
-    }
   };
 
   const handleLeagueChange = (value: string) => {
     setSelectedLeague(value);
-    
-    if (typeof window !== 'undefined') {
-        const url = new URL(window.location.href);
-        url.searchParams.set('league', value);
-        url.searchParams.set('sport', selectedSport);
-        window.history.replaceState({}, '', url.toString());
-    }
   };
 
   const { data: games, isLoading } = useQuery({
@@ -164,7 +150,8 @@ export const Scoreboard = ({
   }, [games]);
 
   return (
-    <div className="space-y-6 pb-[100px] sm:pb-0">
+    // Dynamic padding added when calendar is open
+    <div className={cn("transition-all duration-300", isCalendarOpen ? "pb-[350px]" : "pb-0")}>
       <div className={headerClass}>
         <div className={dropdownGroupClass}>
           <div className={dropdownSportClass}>
@@ -188,7 +175,6 @@ export const Scoreboard = ({
           </div>
         </div>
 
-        {/* FIX 1: Dropped the calendar container to z-30 so it tucks under the dropdowns */}
         <div className="relative flex items-center gap-2 w-full sm:w-auto justify-center sm:justify-end z-30" ref={calendarRef}>
           <button
             onClick={() => setDate(subDays(date, 1))}

@@ -35,8 +35,6 @@ export default function App() {
       const screenWidth = window.screen.width || 390;
       const scale = window.innerWidth / screenWidth;
       
-      // Replaced transform with zoom. Zoom reflows the actual document,
-      // fixing the massive empty space and restoring position: sticky!
       setScaleStyles({
         width: `${screenWidth}px`,
         zoom: scale
@@ -57,7 +55,8 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <div style={scaleStyles} className="bg-transparent text-gray-200 selection:bg-[#9df01c] selection:text-black">
-        <div className={cn("mx-auto p-2 sm:p-4 pb-[100px]", isMobile ? "w-full" : "max-w-7xl w-full")}>
+        {/* Increased pb-[100px] to pb-[130px] to clear the native app's bottom nav */}
+        <div className={cn("mx-auto p-2 sm:p-4 pb-[130px]", isMobile ? "w-full" : "max-w-7xl w-full")}>
           <header className="w-full flex flex-col items-center mb-4">
             <SegmentedControl
               activeTab={activeTab}
