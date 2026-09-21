@@ -13,11 +13,11 @@
       *, *::before, *::after {
         box-sizing: border-box;
       }
-      /* The 100vw width and overflow-x hidden fixes the iOS iframe zoom bug */
+      /* Swapped 100vw for 1px width + 100% min-width to defeat the iOS iframe zoom bug */
       html, body {
-        width: 100vw !important;
+        width: 1px !important;
+        min-width: 100% !important;
         max-width: 100% !important;
-        min-width: 0 !important;
         overflow-x: hidden !important;
         background: transparent !important;
         background-color: transparent !important;
@@ -28,7 +28,8 @@
         font-family: 'Inter', sans-serif;
       }
       #root {
-        width: 100vw !important;
+        width: 1px !important;
+        min-width: 100% !important;
         max-width: 100% !important;
         overflow-x: hidden !important;
         background: transparent !important;

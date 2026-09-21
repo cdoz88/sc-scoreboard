@@ -39,14 +39,14 @@ export default function App() {
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
-    setSelectedGame(null); // Reset detail view when switching tabs
+    setSelectedGame(null); 
   };
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Removed min-h-screen, overflow-y-auto, and overflow-x-hidden so the document can stretch naturally */}
-      <div className="w-full bg-transparent text-gray-200 selection:bg-[#9df01c] selection:text-black">
-        <div className="w-full max-w-7xl mx-auto p-2 sm:p-4 pb-20 sm:pb-8">
+      {/* RESTORED h-screen and overflow-y-auto to fix the cut-off height issue */}
+      <div className="w-full h-screen overflow-y-auto overflow-x-hidden bg-transparent text-gray-200 selection:bg-[#9df01c] selection:text-black no-scrollbar">
+        <div className={cn("w-full mx-auto p-2 sm:p-4 pb-24 sm:pb-8", isMobile ? "max-w-full" : "max-w-7xl")}>
           <header className="w-full flex flex-col items-center mb-4">
             <SegmentedControl
               activeTab={activeTab}
