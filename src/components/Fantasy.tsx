@@ -172,7 +172,7 @@ export const Fantasy = () => {
   const leagueData = selectedLeagueId ? matchupsData?.find(d => d.league.league_id === selectedLeagueId) : null;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative">
       {selectedLeagueId && leagueData && (
         <FantasyMatchupDetails 
           league={leagueData.league}
@@ -267,9 +267,8 @@ export const Fantasy = () => {
           </div>
 
           <div className="border-t border-gray-800 pt-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
-              <h3 className="text-lg font-semibold">Manage Synced Leagues</h3>
-              
+            {/* FIX 2: Stacked the Account Info and Header vertically */}
+            <div className="flex flex-col items-start gap-3 mb-6">
               <div className="flex items-center gap-2 text-xs bg-[#222] border border-gray-700 px-3 py-1.5 rounded-lg">
                 <span className="w-2 h-2 rounded-full bg-[#9df01c] animate-pulse"></span>
                 <span className="text-gray-400">Account:</span>
@@ -287,7 +286,6 @@ export const Fantasy = () => {
                       value={accountInput}
                       onChange={(e) => setAccountInput(e.target.value)}
                       className="bg-[#333] border border-gray-600 rounded px-2 py-0.5 text-white text-xs w-36 focus:outline-none focus:border-[#9df01c]"
-                      autoFocus
                     />
                     <button type="submit" className="text-[#9df01c] hover:underline font-bold">Save</button>
                     <button type="button" onClick={() => { setAccountInput(userAccount); setEditingAccount(false); }} className="text-gray-400 hover:text-white">Cancel</button>
@@ -305,6 +303,7 @@ export const Fantasy = () => {
                   </div>
                 )}
               </div>
+              <h3 className="text-lg font-semibold">Manage Synced Leagues</h3>
             </div>
 
             <div className="space-y-2">
@@ -327,10 +326,10 @@ export const Fantasy = () => {
         </div>
       )}
 
-      {/* Modal for Username */}
+      {/* FIX 3: Replaced `fixed inset-0` with `absolute` and removed `autoFocus` to prevent the blank screen jump */}
       {selectedPlatform && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-          <div className="bg-[#2A2A2A] rounded-2xl p-6 w-full max-w-sm border border-gray-800 text-center">
+        <div className="absolute inset-0 bg-black/80 z-50 p-4 min-h-[100vh]">
+          <div className="bg-[#2A2A2A] rounded-2xl p-6 w-full max-w-sm border border-gray-800 text-center mx-auto mt-10 shadow-2xl">
             {selectedPlatform === 'Sleeper' ? (
               <>
                 <h2 className="text-xl font-semibold mb-2">Enter your username to sync your Sleeper account.</h2>
@@ -342,7 +341,6 @@ export const Fantasy = () => {
                     onChange={(e) => setUsername(e.target.value)}
                     placeholder="Enter username..."
                     className="w-full bg-[#383838] border border-gray-600 rounded-lg px-4 py-3 text-white mb-6 focus:outline-none focus:border-[#9df01c]"
-                    autoFocus
                   />
                   {error && <p className="text-red-400 text-xs font-bold mb-4">{error}</p>}
                   <div className="flex border-t border-gray-800 pt-4 gap-2">

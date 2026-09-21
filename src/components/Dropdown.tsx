@@ -34,7 +34,8 @@ export const Dropdown = ({ value, options, onChange, disabled, className, placeh
   const selectedOption = options.find(opt => opt.value === value);
 
   return (
-    <div className={cn("relative w-full", className)} ref={dropdownRef}>
+    // FIX 1: Added dynamic padding (pb-[250px]) when open to force the iframe to stretch and prevent cutoff
+    <div className={cn("relative w-full transition-all duration-300", isOpen ? "pb-[250px]" : "pb-0", className)} ref={dropdownRef}>
       <button
         type="button"
         disabled={disabled}
@@ -66,7 +67,7 @@ export const Dropdown = ({ value, options, onChange, disabled, className, placeh
       </button>
 
       {isOpen && !disabled && (
-        <div className="absolute top-full left-0 w-full mt-1 rounded-lg overflow-hidden z-50 bg-[#2c2c2c] border border-[#4b5563] shadow-[0_10px_15px_-3px_rgba(0,0,0,0.5)] max-h-96 overflow-y-auto custom-scroll pb-1">
+        <div className="absolute top-12 left-0 w-full mt-1 rounded-lg overflow-hidden z-50 bg-[#2c2c2c] border border-[#4b5563] shadow-[0_10px_15px_-3px_rgba(0,0,0,0.5)] max-h-64 overflow-y-auto custom-scroll pb-1">
           {options.map((option) => (
             <div
               key={option.value}

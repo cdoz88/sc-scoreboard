@@ -32,12 +32,16 @@ export default function App() {
     const isMobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     
     if (isMobileUA && window.innerWidth > 600) {
-      const screenWidth = window.screen.width || 390;
+      // Use Math.min to ensure we don't accidentally measure the scrollbar width
+      const screenWidth = Math.min(window.screen.width || 390, window.innerWidth);
       const scale = window.innerWidth / screenWidth;
       
       setScaleStyles({
         width: `${screenWidth}px`,
-        zoom: scale
+        maxWidth: '100%',
+        zoom: scale,
+        overflowX: 'hidden',
+        boxSizing: 'border-box'
       } as React.CSSProperties);
     }
   }, []);
@@ -54,9 +58,9 @@ export default function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <div style={scaleStyles} className="bg-transparent text-gray-200 selection:bg-[#9df01c] selection:text-black">
-        {/* Increased pb-[100px] to pb-[130px] to clear the native app's bottom nav */}
-        <div className={cn("mx-auto p-2 sm:p-4 pb-[130px]", isMobile ? "w-full" : "max-w-7xl w-full")}>
+      {/* Added strict overflow-hidden constraints here to kill the horizontal scroll */}
+      <div style={scaleStyles} className="bg-transparent text-gray-200 selection:bg-[#9df01c] selection:text-black overflow-x-hidden max-w-full">
+        <div className={cn("mx-auto p-2 sm:p-4 pb-[130px] overflow-x-hidden", isMobile ? "w-full max-w-full" : "max-w-7xl w-full")}>
           <header className="w-full flex flex-col items-center mb-4">
             <SegmentedControl
               activeTab={activeTab}
@@ -65,7 +69,7 @@ export default function App() {
             />
           </header>
 
-          <main className="w-full">
+          <main className="w-full max-w-full overflow-x-hidden">
             <AnimatePresence mode="wait">
               {selectedGame ? (
                 <motion.div
@@ -74,6 +78,7 @@ export default function App() {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
                   transition={{ duration: 0.2 }}
+                  className="max-w-full"
                 >
                   <GameDetails 
                     gameId={selectedGame.id} 
@@ -88,6 +93,7 @@ export default function App() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 0.2, ease: "easeOut" }}
+                  className="max-w-full"
                 >
                   {activeTab === 'scores' && (
                     <Scoreboard 
