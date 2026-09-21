@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" class="no-scrollbar" style="background: transparent !important; background-color: transparent !important;">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
@@ -10,34 +10,16 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     
     <style>
-      *, *::before, *::after {
-        box-sizing: border-box;
-      }
-      /* Swapped 100vw for 1px width + 100% min-width to defeat the iOS iframe zoom bug */
       html, body {
-        width: 1px !important;
-        min-width: 100% !important;
-        max-width: 100% !important;
-        overflow-x: hidden !important;
-        background: transparent !important;
         background-color: transparent !important;
-        -webkit-text-size-adjust: 100%;
-        text-size-adjust: 100%;
-        margin: 0 !important;
-        padding: 0 !important;
+        margin: 0;
+        padding: 0;
         font-family: 'Inter', sans-serif;
-      }
-      #root {
-        width: 1px !important;
-        min-width: 100% !important;
-        max-width: 100% !important;
-        overflow-x: hidden !important;
-        background: transparent !important;
-        background-color: transparent !important;
+        overflow-x: hidden;
       }
     </style>
 
-    <!-- Restored iframe-resizer to fix the height getting cut off -->
+    <!-- iframe-resizer for height calculation -->
     <script>
       window.iFrameResizer = {
         targetOrigin: '*',
@@ -48,8 +30,46 @@
       };
     </script>
     <script defer src="https://cdnjs.cloudflare.com/ajax/libs/iframe-resizer/4.3.9/iframeResizer.contentWindow.min.js"></script>
+
+    <!-- THE REVERSE-SCALE HACK FOR TRAPPED IFRAMES -->
+    <script>
+      function fixWebviewZoom() {
+        // Detect if the user is on a mobile device
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        
+        // If we are on mobile, but the window width is rendering like a desktop monitor (e.g., > 600px)
+        if (isMobile && window.innerWidth > 600) {
+          try {
+            // Attempt 1: Try to dynamically inject the viewport tag into the parent page
+            if (!window.parent.document.querySelector('meta[name="viewport"]')) {
+              const meta = window.parent.document.createElement('meta');
+              meta.name = "viewport";
+              meta.content = "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no";
+              window.parent.document.head.appendChild(meta);
+              return; 
+            }
+          } catch (e) {
+            // Attempt 2: Parent blocked us (cross-origin). Apply Reverse-Scale math.
+            const screenWidth = window.screen.width || 390;
+            const scaleFactor = window.innerWidth / screenWidth;
+            
+            const root = document.getElementById('root');
+            if (root) {
+              // Force our app to mobile width, then blow it up to fill the desktop-sized iframe
+              root.style.width = screenWidth + 'px';
+              root.style.transform = 'scale(' + scaleFactor + ')';
+              root.style.transformOrigin = 'top left';
+            }
+          }
+        }
+      }
+      
+      // Execute the hack as soon as the DOM is ready
+      window.addEventListener('DOMContentLoaded', fixWebviewZoom);
+      window.addEventListener('resize', fixWebviewZoom);
+    </script>
   </head>
-  <body class="no-scrollbar" style="background: transparent !important; background-color: transparent !important;">
+  <body class="text-gray-200 antialiased">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
