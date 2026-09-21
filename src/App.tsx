@@ -44,8 +44,9 @@ export default function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="w-full max-w-full min-h-screen bg-transparent text-gray-200 selection:bg-[#9df01c] selection:text-black no-scrollbar overflow-x-hidden overflow-y-auto">
-        <div className={cn("w-full mx-auto p-2 sm:p-4 pb-20 sm:pb-8 overflow-x-hidden", isMobile ? "max-w-full" : "max-w-7xl")}>
+      {/* Removed min-h-screen, overflow-y-auto, and overflow-x-hidden so the document can stretch naturally */}
+      <div className="w-full bg-transparent text-gray-200 selection:bg-[#9df01c] selection:text-black">
+        <div className="w-full max-w-7xl mx-auto p-2 sm:p-4 pb-20 sm:pb-8">
           <header className="w-full flex flex-col items-center mb-4">
             <SegmentedControl
               activeTab={activeTab}
@@ -54,7 +55,7 @@ export default function App() {
             />
           </header>
 
-          <main className="w-full max-w-full overflow-x-hidden">
+          <main className="w-full">
             <AnimatePresence mode="wait">
               {selectedGame ? (
                 <motion.div

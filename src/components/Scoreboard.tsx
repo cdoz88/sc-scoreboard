@@ -42,7 +42,6 @@ export const Scoreboard = ({
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const calendarRef = useRef<HTMLDivElement>(null);
 
-  // 1. Read the URL query parameters on initial load
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
@@ -53,7 +52,6 @@ export const Scoreboard = ({
         const upperLeague = leagueParam.toUpperCase();
         setSelectedLeague(upperLeague);
         
-        // Smart Detection: Auto-set the sport if they only passed the league (e.g. ?league=NBA)
         const foundLeague = LEAGUES.find(l => l.id === upperLeague);
         if (foundLeague) {
           setSelectedSport(foundLeague.sport.toUpperCase());
@@ -81,7 +79,6 @@ export const Scoreboard = ({
     return LEAGUES.filter(l => l.sport.toUpperCase() === selectedSport);
   }, [selectedSport]);
 
-  // 2. Update the URL dynamically when the user changes the Sport dropdown
   const handleSportChange = (value: string) => {
     setSelectedSport(value);
     setSelectedLeague('ALL');
@@ -94,7 +91,6 @@ export const Scoreboard = ({
     }
   };
 
-  // 3. Update the URL dynamically when the user changes the League dropdown
   const handleLeagueChange = (value: string) => {
     setSelectedLeague(value);
     
@@ -151,7 +147,7 @@ export const Scoreboard = ({
   }, [games]);
 
   return (
-    <div className="space-y-6 min-h-[450px] pb-[100px] sm:pb-0">
+    <div className="space-y-6 pb-[100px] sm:pb-0">
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-8">
         <div className="flex items-center gap-2 w-full sm:w-auto z-30">
           <div className="relative w-full sm:w-48">
@@ -178,14 +174,14 @@ export const Scoreboard = ({
         <div className="relative flex items-center gap-2 w-full sm:w-auto justify-center sm:justify-end z-50" ref={calendarRef}>
           <button
             onClick={() => setDate(subDays(date, 1))}
-            className="p-2.5 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors text-gray-300"
+            className="p-2.5 bg-[#2c2c2c] hover:bg-[#374151] rounded-lg transition-colors text-gray-300"
           >
             <ChevronLeft size={16} />
           </button>
           
           <button
             onClick={() => setIsCalendarOpen(!isCalendarOpen)}
-            className="flex items-center justify-center gap-2 w-32 px-4 py-2.5 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors font-bold text-sm text-gray-200 uppercase tracking-wide cursor-pointer"
+            className="flex items-center justify-center gap-2 w-32 px-4 py-2.5 bg-[#2c2c2c] hover:bg-[#374151] rounded-lg transition-colors font-bold text-sm text-gray-200 uppercase tracking-wide cursor-pointer"
           >
             <span className="pointer-events-none">{isToday(date) ? 'TODAY' : format(date, 'MMM d')}</span>
             <ChevronDown size={14} className="text-gray-400 pointer-events-none" />
@@ -193,7 +189,7 @@ export const Scoreboard = ({
 
           <button
             onClick={() => setDate(addDays(date, 1))}
-            className="p-2.5 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors text-gray-300"
+            className="p-2.5 bg-[#2c2c2c] hover:bg-[#374151] rounded-lg transition-colors text-gray-300"
           >
             <ChevronRight size={16} />
           </button>
@@ -214,7 +210,7 @@ export const Scoreboard = ({
             <div key={i} className="h-40 bg-gray-800/50 animate-pulse rounded-xl border border-gray-700/50" />
           ))}
         </div>
-      ) : games?.length === 0 ? (
+      ) : !games || games.length === 0 ? (
         <div className="text-center py-20 bg-gray-800/30 rounded-2xl border border-dashed border-gray-700">
           <p className="text-gray-500 font-bold uppercase tracking-widest">No games scheduled</p>
         </div>
