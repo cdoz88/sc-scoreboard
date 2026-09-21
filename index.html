@@ -9,35 +9,33 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     
     <style>
+      /* Safe, standard constraints to prevent iOS Webviews from expanding the width */
       html, body {
         background-color: transparent !important;
         margin: 0;
         padding: 0;
         font-family: 'Inter', sans-serif;
-        /* 1. Stops iOS from inflating text and squishing your Game Details tabs */
-        -webkit-text-size-adjust: none;
-        text-size-adjust: none;
+        max-width: 100vw;
+        overflow-x: hidden;
+        -webkit-text-size-adjust: 100%;
+        text-size-adjust: 100%;
+      }
+      #root {
+        max-width: 100vw;
+        overflow-x: hidden;
       }
     </style>
 
     <script>
-      // 2. The mathematical counter-strike to the iOS Webview bug
-      function fixTrappedIframe() {
-        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-        
-        // If we are on a phone, but the iframe is acting like a desktop monitor (> 600px)
-        if (isMobile && window.innerWidth > 600) {
-          const screenWidth = window.screen.width || 390;
-          // Calculate exactly how much the native app is shrinking the screen
-          const scaleFactor = window.innerWidth / screenWidth;
-          
-          // Blow our app up by that exact amount so they cancel each other out
-          document.body.style.zoom = scaleFactor;
-        }
-      }
-      window.addEventListener('DOMContentLoaded', fixTrappedIframe);
+      window.iFrameResizer = {
+        targetOrigin: '*',
+        sizeWidth: false,
+        checkOrigin: false,
+        scrolling: false,
+        heightCalculationMethod: 'bodyOffset'
+      };
     </script>
-    <!-- Removed iframe-resizer script completely to restore native scrolling and fix the height cutoff -->
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/iframe-resizer/4.3.9/iframeResizer.contentWindow.min.js"></script>
   </head>
   <body class="text-gray-200 antialiased no-scrollbar">
     <div id="root"></div>
