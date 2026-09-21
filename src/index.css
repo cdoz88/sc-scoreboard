@@ -6,7 +6,7 @@
   background: transparent !important;
 }
 
-/* Hide scrollbars visually, but ALLOW the page to scroll normally */
+/* Hide scrollbars globally, but do NOT stop the page from scrolling natively */
 ::-webkit-scrollbar {
   display: none !important;
   width: 0px !important;

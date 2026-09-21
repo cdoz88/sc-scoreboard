@@ -7,15 +7,29 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
     <style>
-      /* Keep the background transparent to blend with your parent website */
       html, body {
         background-color: transparent !important;
         margin: 0;
         padding: 0;
         font-family: 'Inter', sans-serif;
+        -webkit-text-size-adjust: 100%;
       }
     </style>
+
+    <script>
+      window.iFrameResizer = {
+        targetOrigin: '*',
+        sizeWidth: false,
+        checkOrigin: false,
+        scrolling: false,
+        /* lowestElement is critical for React apps because it waits for the async games to load */
+        heightCalculationMethod: 'lowestElement' 
+      };
+    </script>
+    <!-- FIXED 404 ERROR: Swapped dead CDN link for a highly reliable JSDelivr link -->
+    <script defer src="https://cdn.jsdelivr.net/npm/iframe-resizer@4.3.9/js/iframeResizer.contentWindow.min.js"></script>
   </head>
   <body class="text-gray-200 antialiased">
     <div id="root"></div>
