@@ -26,23 +26,21 @@ export default function App() {
   const [selectedSport, setSelectedSport] = useState<string>('ALL SPORTS');
   const [selectedLeague, setSelectedLeague] = useState<string>('ALL');
 
-  // The Scale Hack State
   const [scaleStyles, setScaleStyles] = useState<React.CSSProperties>({});
 
   useEffect(() => {
     const isMobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     
-    // If we are trapped inside a desktop-width WebView (e.g. 980px) on a mobile device
     if (isMobileUA && window.innerWidth > 600) {
       const screenWidth = window.screen.width || 390;
       const scale = window.innerWidth / screenWidth;
       
+      // Replaced transform with zoom. Zoom reflows the actual document,
+      // fixing the massive empty space and restoring position: sticky!
       setScaleStyles({
         width: `${screenWidth}px`,
-        transform: `scale(${scale})`,
-        transformOrigin: 'top left',
-        minHeight: `calc(100vh / ${scale})`
-      });
+        zoom: scale
+      } as React.CSSProperties);
     }
   }, []);
 
@@ -58,7 +56,6 @@ export default function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* The scale style wraps the entire app, fixing the tiny text bug */}
       <div style={scaleStyles} className="bg-transparent text-gray-200 selection:bg-[#9df01c] selection:text-black">
         <div className={cn("mx-auto p-2 sm:p-4 pb-[100px]", isMobile ? "w-full" : "max-w-7xl w-full")}>
           <header className="w-full flex flex-col items-center mb-4">

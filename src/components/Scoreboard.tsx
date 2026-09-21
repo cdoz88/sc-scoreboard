@@ -44,7 +44,6 @@ export const Scoreboard = ({
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const calendarRef = useRef<HTMLDivElement>(null);
 
-  // Structural overrides that forcefully dismantle desktop layouts on mobile
   const gridClass = isMobile 
     ? "grid grid-cols-1 gap-4" 
     : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4";
@@ -53,9 +52,10 @@ export const Scoreboard = ({
     ? "flex flex-col gap-4 mb-6" 
     : "flex flex-col sm:flex-row justify-between items-center gap-4 mb-8";
 
+  // FIX 1: Bumped the dropdown container to z-50 so it sits on top
   const dropdownGroupClass = isMobile 
-    ? "flex flex-col w-full gap-3 z-30" 
-    : "flex items-center gap-2 w-full sm:w-auto z-30";
+    ? "flex flex-col w-full gap-3 z-50" 
+    : "flex items-center gap-2 w-full sm:w-auto z-50";
 
   const dropdownSportClass = isMobile ? "relative w-full" : "relative w-full sm:w-48";
   const dropdownLeagueClass = isMobile ? "relative w-full" : "relative w-full sm:w-40";
@@ -79,7 +79,6 @@ export const Scoreboard = ({
         if (leagueParam === 'ALL') setSelectedLeague('ALL');
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -189,7 +188,8 @@ export const Scoreboard = ({
           </div>
         </div>
 
-        <div className="relative flex items-center gap-2 w-full sm:w-auto justify-center sm:justify-end z-50" ref={calendarRef}>
+        {/* FIX 1: Dropped the calendar container to z-30 so it tucks under the dropdowns */}
+        <div className="relative flex items-center gap-2 w-full sm:w-auto justify-center sm:justify-end z-30" ref={calendarRef}>
           <button
             onClick={() => setDate(subDays(date, 1))}
             className="p-2.5 bg-[#2c2c2c] hover:bg-[#374151] rounded-lg transition-colors text-gray-300"
