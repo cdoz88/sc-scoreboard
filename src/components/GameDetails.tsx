@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ChevronLeft, MapPin, Tv, Info, Users, List, RefreshCw, Cloud, Circle, Square, ArrowLeftRight, AlertCircle } from 'lucide-react';
 import { fetchGameSummary } from '../services/espnService';
 import { cn, getTeamLogo } from '../lib/utils';
+import { useIsMobile } from '../hooks/useIsMobile';
 
 interface GameDetailsProps {
   gameId: string;
@@ -12,6 +13,7 @@ interface GameDetailsProps {
 }
 
 export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
+  const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState<'summary' | 'boxscore' | 'plays'>('summary');
   const [boxscoreTab, setBoxscoreTab] = useState<'team' | 'away' | 'home'>('team');
   const [hasSetDefaultTab, setHasSetDefaultTab] = useState(false);
@@ -144,7 +146,6 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
 
     return (
       <div className="max-w-5xl mx-auto pb-16 sm:pb-24">
-        {/* Back to bg-transparent for racing header */}
         <div className="sticky top-0 z-20 bg-transparent pt-6 pb-2">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
@@ -332,9 +333,14 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
     return <span className="font-bold text-white">{name}</span>;
   };
 
+  // Helper functions to safely extract team names and abbreviations
+  const getAwayFullName = () => away.team.displayName || away.team.name || away.team.abbreviation || 'AWAY';
+  const getAwayAbbr = () => away.team.abbreviation || away.team.name || 'AWAY';
+  const getHomeFullName = () => home.team.displayName || home.team.name || home.team.abbreviation || 'HOME';
+  const getHomeAbbr = () => home.team.abbreviation || home.team.name || 'HOME';
+
   return (
     <div className="max-w-4xl mx-auto pb-16 sm:pb-24">
-      {/* Back to bg-transparent for main header */}
       <div className="sticky top-0 z-20 bg-transparent pt-6 pb-2">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
@@ -531,9 +537,9 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
                   )}
                 >
                   <img src={getTeamLogo(away.team)} className="w-4 h-4 object-contain hidden sm:block" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.src = `https://placehold.co/48x48/1f2937/ffffff?text=${away.team.abbreviation || '?'}` }} />
-                  {/* Prioritized abbreviation for mobile views */}
-                  <span className="hidden sm:inline">{away.team.displayName || away.team.name || away.team.abbreviation}</span>
-                  <span className="sm:hidden">{away.team.abbreviation || away.team.name}</span>
+                  {/* FIX 3: Prioritize abbreviation first on mobile */}
+                  <span className="hidden sm:inline">{getAwayFullName()}</span>
+                  <span className="sm:hidden">{getAwayAbbr()}</span>
                 </button>
                 <button
                   onClick={() => setBoxscoreTab('home')}
@@ -543,9 +549,9 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
                   )}
                 >
                   <img src={getTeamLogo(home.team)} className="w-4 h-4 object-contain hidden sm:block" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.src = `https://placehold.co/48x48/1f2937/ffffff?text=${home.team.abbreviation || '?'}` }} />
-                  {/* Prioritized abbreviation for mobile views */}
-                  <span className="hidden sm:inline">{home.team.displayName || home.team.name || home.team.abbreviation}</span>
-                  <span className="sm:hidden">{home.team.abbreviation || home.team.name}</span>
+                  {/* FIX 3: Prioritize abbreviation first on mobile */}
+                  <span className="hidden sm:inline">{getHomeFullName()}</span>
+                  <span className="sm:hidden">{getHomeAbbr()}</span>
                 </button>
               </div>
 

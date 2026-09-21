@@ -267,11 +267,11 @@ export const Fantasy = () => {
           </div>
 
           <div className="border-t border-gray-800 pt-6">
-            {/* FIX 2: Stacked the Account Info and Header vertically */}
+            {/* FIX 2: Strictly left-aligned the account info */}
             <div className="flex flex-col items-start gap-3 mb-6">
-              <div className="flex items-center gap-2 text-xs bg-[#222] border border-gray-700 px-3 py-1.5 rounded-lg">
-                <span className="w-2 h-2 rounded-full bg-[#9df01c] animate-pulse"></span>
-                <span className="text-gray-400">Account:</span>
+              <div className="flex items-center justify-start gap-2 text-xs bg-[#222] border border-gray-700 px-3 py-1.5 rounded-lg w-auto max-w-full">
+                <span className="w-2 h-2 rounded-full bg-[#9df01c] animate-pulse flex-shrink-0"></span>
+                <span className="text-gray-400 flex-shrink-0">Account:</span>
                 {editingAccount ? (
                   <form 
                     onSubmit={(e) => {
@@ -279,23 +279,23 @@ export const Fantasy = () => {
                       setUserAccount(accountInput);
                       setEditingAccount(false);
                     }}
-                    className="flex items-center gap-1.5"
+                    className="flex items-center gap-1.5 min-w-0"
                   >
                     <input
                       type="text"
                       value={accountInput}
                       onChange={(e) => setAccountInput(e.target.value)}
-                      className="bg-[#333] border border-gray-600 rounded px-2 py-0.5 text-white text-xs w-36 focus:outline-none focus:border-[#9df01c]"
+                      className="bg-[#333] border border-gray-600 rounded px-2 py-0.5 text-white text-xs w-32 focus:outline-none focus:border-[#9df01c]"
                     />
-                    <button type="submit" className="text-[#9df01c] hover:underline font-bold">Save</button>
-                    <button type="button" onClick={() => { setAccountInput(userAccount); setEditingAccount(false); }} className="text-gray-400 hover:text-white">Cancel</button>
+                    <button type="submit" className="text-[#9df01c] hover:underline font-bold flex-shrink-0">Save</button>
+                    <button type="button" onClick={() => { setAccountInput(userAccount); setEditingAccount(false); }} className="text-gray-400 hover:text-white flex-shrink-0">Cancel</button>
                   </form>
                 ) : (
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-white font-medium">{userAccount}</span>
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span className="text-white font-medium truncate">{userAccount}</span>
                     <button 
                       onClick={() => setEditingAccount(true)} 
-                      className="text-[#9df01c] hover:underline font-semibold"
+                      className="text-[#9df01c] hover:underline font-semibold flex-shrink-0"
                       title="Click to change account for cross-device sync"
                     >
                       (Edit)
@@ -303,7 +303,7 @@ export const Fantasy = () => {
                   </div>
                 )}
               </div>
-              <h3 className="text-lg font-semibold">Manage Synced Leagues</h3>
+              <h3 className="text-lg font-semibold w-full text-left">Manage Synced Leagues</h3>
             </div>
 
             <div className="space-y-2">
@@ -326,7 +326,6 @@ export const Fantasy = () => {
         </div>
       )}
 
-      {/* FIX 3: Replaced `fixed inset-0` with `absolute` and removed `autoFocus` to prevent the blank screen jump */}
       {selectedPlatform && (
         <div className="absolute inset-0 bg-black/80 z-50 p-4 min-h-[100vh]">
           <div className="bg-[#2A2A2A] rounded-2xl p-6 w-full max-w-sm border border-gray-800 text-center mx-auto mt-10 shadow-2xl">
