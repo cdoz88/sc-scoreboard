@@ -267,41 +267,43 @@ export const Fantasy = () => {
           </div>
 
           <div className="border-t border-gray-800 pt-6">
-            {/* FIX 2: Strictly left-aligned the account info */}
-            <div className="flex flex-col items-start gap-3 mb-6">
-              <div className="flex items-center justify-start gap-2 text-xs bg-[#222] border border-gray-700 px-3 py-1.5 rounded-lg w-auto max-w-full">
-                <span className="w-2 h-2 rounded-full bg-[#9df01c] animate-pulse flex-shrink-0"></span>
-                <span className="text-gray-400 flex-shrink-0">Account:</span>
-                {editingAccount ? (
-                  <form 
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      setUserAccount(accountInput);
-                      setEditingAccount(false);
-                    }}
-                    className="flex items-center gap-1.5 min-w-0"
-                  >
-                    <input
-                      type="text"
-                      value={accountInput}
-                      onChange={(e) => setAccountInput(e.target.value)}
-                      className="bg-[#333] border border-gray-600 rounded px-2 py-0.5 text-white text-xs w-32 focus:outline-none focus:border-[#9df01c]"
-                    />
-                    <button type="submit" className="text-[#9df01c] hover:underline font-bold flex-shrink-0">Save</button>
-                    <button type="button" onClick={() => { setAccountInput(userAccount); setEditingAccount(false); }} className="text-gray-400 hover:text-white flex-shrink-0">Cancel</button>
-                  </form>
-                ) : (
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    <span className="text-white font-medium truncate">{userAccount}</span>
-                    <button 
-                      onClick={() => setEditingAccount(true)} 
-                      className="text-[#9df01c] hover:underline font-semibold flex-shrink-0"
-                      title="Click to change account for cross-device sync"
+            <div className="flex flex-col gap-3 mb-6">
+              {/* Force right-justified pill container */}
+              <div className="flex justify-end w-full">
+                <div className="flex items-center justify-start gap-2 text-xs bg-[#222] border border-gray-700 px-3 py-1.5 rounded-lg w-auto max-w-full">
+                  <span className="w-2 h-2 rounded-full bg-[#9df01c] animate-pulse flex-shrink-0"></span>
+                  <span className="text-gray-400 flex-shrink-0">Account:</span>
+                  {editingAccount ? (
+                    <form 
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        setUserAccount(accountInput);
+                        setEditingAccount(false);
+                      }}
+                      className="flex items-center gap-1.5 min-w-0"
                     >
-                      (Edit)
-                    </button>
-                  </div>
-                )}
+                      <input
+                        type="text"
+                        value={accountInput}
+                        onChange={(e) => setAccountInput(e.target.value)}
+                        className="bg-[#333] border border-gray-600 rounded px-2 py-0.5 text-white text-xs w-32 focus:outline-none focus:border-[#9df01c]"
+                      />
+                      <button type="submit" className="text-[#9df01c] hover:underline font-bold flex-shrink-0">Save</button>
+                      <button type="button" onClick={() => { setAccountInput(userAccount); setEditingAccount(false); }} className="text-gray-400 hover:text-white flex-shrink-0">Cancel</button>
+                    </form>
+                  ) : (
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <span className="text-white font-medium truncate">{userAccount}</span>
+                      <button 
+                        onClick={() => setEditingAccount(true)} 
+                        className="text-[#9df01c] hover:underline font-semibold flex-shrink-0"
+                        title="Click to change account for cross-device sync"
+                      >
+                        (Edit)
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
               <h3 className="text-lg font-semibold w-full text-left">Manage Synced Leagues</h3>
             </div>

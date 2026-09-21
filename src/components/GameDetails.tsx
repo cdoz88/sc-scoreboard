@@ -245,7 +245,6 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
     );
   }
 
-  // --- STANDARD MATCHUP LOGIC ---
   if (!summary || !competition) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
@@ -333,7 +332,6 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
     return <span className="font-bold text-white">{name}</span>;
   };
 
-  // Helper functions to safely extract team names and abbreviations
   const getAwayFullName = () => away.team.displayName || away.team.name || away.team.abbreviation || 'AWAY';
   const getAwayAbbr = () => away.team.abbreviation || away.team.name || 'AWAY';
   const getHomeFullName = () => home.team.displayName || home.team.name || home.team.abbreviation || 'HOME';
@@ -536,10 +534,12 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
                     boxscoreTab === 'away' ? "border border-green-500 bg-green-500/10 text-white shadow-sm" : "border border-transparent text-gray-400 hover:text-gray-200"
                   )}
                 >
-                  <img src={getTeamLogo(away.team)} className="w-4 h-4 object-contain hidden sm:block" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.src = `https://placehold.co/48x48/1f2937/ffffff?text=${away.team.abbreviation || '?'}` }} />
-                  {/* FIX 3: Prioritize abbreviation first on mobile */}
-                  <span className="hidden sm:inline">{getAwayFullName()}</span>
-                  <span className="sm:hidden">{getAwayAbbr()}</span>
+                  {/* Hide image on mobile via logic to prevent text wrapping issues */}
+                  {!isMobile && (
+                    <img src={getTeamLogo(away.team)} className="w-4 h-4 object-contain" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.src = `https://placehold.co/48x48/1f2937/ffffff?text=${away.team.abbreviation || '?'}` }} />
+                  )}
+                  {/* FIX 1: Strictly enforce abbreviation on mobile */}
+                  <span>{isMobile ? getAwayAbbr() : getAwayFullName()}</span>
                 </button>
                 <button
                   onClick={() => setBoxscoreTab('home')}
@@ -548,10 +548,12 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
                     boxscoreTab === 'home' ? "border border-green-500 bg-green-500/10 text-white shadow-sm" : "border border-transparent text-gray-400 hover:text-gray-200"
                   )}
                 >
-                  <img src={getTeamLogo(home.team)} className="w-4 h-4 object-contain hidden sm:block" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.src = `https://placehold.co/48x48/1f2937/ffffff?text=${home.team.abbreviation || '?'}` }} />
-                  {/* FIX 3: Prioritize abbreviation first on mobile */}
-                  <span className="hidden sm:inline">{getHomeFullName()}</span>
-                  <span className="sm:hidden">{getHomeAbbr()}</span>
+                  {/* Hide image on mobile via logic to prevent text wrapping issues */}
+                  {!isMobile && (
+                    <img src={getTeamLogo(home.team)} className="w-4 h-4 object-contain" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.src = `https://placehold.co/48x48/1f2937/ffffff?text=${home.team.abbreviation || '?'}` }} />
+                  )}
+                  {/* FIX 1: Strictly enforce abbreviation on mobile */}
+                  <span>{isMobile ? getHomeAbbr() : getHomeFullName()}</span>
                 </button>
               </div>
 
