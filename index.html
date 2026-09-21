@@ -4,33 +4,52 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>Sellout Crowds Scoreboard</title>
+
+    <!-- 1. USER AGENT OVERRIDE: Forces the WebView to register as a mobile device immediately -->
+    <script>
+      function setUserAgent(win, userAgent) {
+        if (win.navigator.userAgent != userAgent) {
+          var userAgentProp = { get: function () { return userAgent; } };
+          try {
+            Object.defineProperty(win.navigator, 'userAgent', userAgentProp);
+          } catch (e) {
+            win.navigator = Object.create(navigator, {
+              userAgent: userAgentProp
+            });
+          }
+        }
+      }
+      // Applied directly to our own window using the exact UA string that worked for you previously
+      setUserAgent(window, 'Mozilla/5.0 (Linux; Android 7.0; Pixel C Build/NRD90M; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/52.0.2743.98 Safari/537.36');
+    </script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     
     <style>
-      body {
+      html, body {
         background-color: transparent !important;
         margin: 0;
         padding: 0;
         font-family: 'Inter', sans-serif;
       }
-      html { background-color: transparent !important; }
     </style>
 
     <script>
       window.iFrameResizer = {
         targetOrigin: '*',
+        sizeWidth: false,
         checkOrigin: false,
-        /* This tells the iframe to accommodate absolutely positioned drop-downs like your calendar! */
+        scrolling: false,
         heightCalculationMethod: 'lowestElement' 
       };
     </script>
-    <!-- Restored your original working CDN link. No more 404 errors! -->
-    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/iframe-resizer/4.3.9/iframeResizer.contentWindow.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/iframe-resizer@4.3.9/js/iframeResizer.contentWindow.min.js"></script>
   </head>
-  <body class="text-gray-200 antialiased no-scrollbar">
-    <div id="root"></div>
+  <body class="text-gray-200 antialiased">
+    <!-- 2. PRE-RENDERED MOBILE SKELETON: Gives the WebView a physical mobile width to measure against before React loads -->
+    <div id="root" style="width: 100vw; max-width: 100%; overflow-x: hidden;"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
