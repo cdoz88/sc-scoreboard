@@ -1,3 +1,8 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import React, { useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SegmentedControl } from './components/SegmentedControl';
@@ -38,7 +43,8 @@ export default function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="w-full max-w-full overflow-x-hidden bg-transparent text-gray-200 selection:bg-[#9df01c] selection:text-black">
+      {/* Completely removed h-screen and overflow constraints so the games can push the page down naturally */}
+      <div className="w-full bg-transparent text-gray-200 selection:bg-[#9df01c] selection:text-black">
         <div className={cn("w-full mx-auto p-2 sm:p-4 pb-[100px]", isMobile ? "max-w-full" : "max-w-7xl")}>
           <header className="w-full flex flex-col items-center mb-4">
             <SegmentedControl
@@ -48,7 +54,7 @@ export default function App() {
             />
           </header>
 
-          <main className="w-full max-w-full overflow-x-hidden">
+          <main className="w-full">
             <AnimatePresence mode="wait">
               {selectedGame ? (
                 <motion.div

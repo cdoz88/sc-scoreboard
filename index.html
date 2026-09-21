@@ -4,7 +4,6 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>Sellout Crowds Scoreboard</title>
-    <meta name="description" content="Native sports scoreboard and fantasy integration for Sellout Crowds." />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -15,61 +14,32 @@
         margin: 0;
         padding: 0;
         font-family: 'Inter', sans-serif;
-        overflow-x: hidden;
+        /* 1. Stops iOS from inflating text and squishing your Game Details tabs */
+        -webkit-text-size-adjust: none;
+        text-size-adjust: none;
       }
     </style>
 
-    <!-- iframe-resizer for height calculation -->
     <script>
-      window.iFrameResizer = {
-        targetOrigin: '*',
-        sizeWidth: false,
-        checkOrigin: false,
-        scrolling: false,
-        heightCalculationMethod: 'bodyOffset'
-      };
-    </script>
-    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/iframe-resizer/4.3.9/iframeResizer.contentWindow.min.js"></script>
-
-    <!-- THE REVERSE-SCALE HACK FOR TRAPPED IFRAMES -->
-    <script>
-      function fixWebviewZoom() {
-        // Detect if the user is on a mobile device
+      // 2. The mathematical counter-strike to the iOS Webview bug
+      function fixTrappedIframe() {
         const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
         
-        // If we are on mobile, but the window width is rendering like a desktop monitor (e.g., > 600px)
+        // If we are on a phone, but the iframe is acting like a desktop monitor (> 600px)
         if (isMobile && window.innerWidth > 600) {
-          try {
-            // Attempt 1: Try to dynamically inject the viewport tag into the parent page
-            if (!window.parent.document.querySelector('meta[name="viewport"]')) {
-              const meta = window.parent.document.createElement('meta');
-              meta.name = "viewport";
-              meta.content = "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no";
-              window.parent.document.head.appendChild(meta);
-              return; 
-            }
-          } catch (e) {
-            // Attempt 2: Parent blocked us (cross-origin). Apply Reverse-Scale math.
-            const screenWidth = window.screen.width || 390;
-            const scaleFactor = window.innerWidth / screenWidth;
-            
-            const root = document.getElementById('root');
-            if (root) {
-              // Force our app to mobile width, then blow it up to fill the desktop-sized iframe
-              root.style.width = screenWidth + 'px';
-              root.style.transform = 'scale(' + scaleFactor + ')';
-              root.style.transformOrigin = 'top left';
-            }
-          }
+          const screenWidth = window.screen.width || 390;
+          // Calculate exactly how much the native app is shrinking the screen
+          const scaleFactor = window.innerWidth / screenWidth;
+          
+          // Blow our app up by that exact amount so they cancel each other out
+          document.body.style.zoom = scaleFactor;
         }
       }
-      
-      // Execute the hack as soon as the DOM is ready
-      window.addEventListener('DOMContentLoaded', fixWebviewZoom);
-      window.addEventListener('resize', fixWebviewZoom);
+      window.addEventListener('DOMContentLoaded', fixTrappedIframe);
     </script>
+    <!-- Removed iframe-resizer script completely to restore native scrolling and fix the height cutoff -->
   </head>
-  <body class="text-gray-200 antialiased">
+  <body class="text-gray-200 antialiased no-scrollbar">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

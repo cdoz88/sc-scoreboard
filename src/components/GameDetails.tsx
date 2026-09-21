@@ -62,7 +62,6 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
   if (['PGA', 'NASCAR', 'F1'].includes(leagueId) && (competition?.competitors || fallbackGame?.golfCompetitors)) {
     const isRacing = ['NASCAR', 'F1'].includes(leagueId);
     
-    // FIX: Make sure the Header dynamically updates to the correct Session Name (e.g. "Practice 1")
     let eventName = header?.shortName || header?.name || 'Event Details';
     if (isRacing && competition?.type?.text) {
         eventName = `${header?.shortName || header?.name} - ${competition.type.text}`;
@@ -74,7 +73,6 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
     const competitors = competition?.competitors || fallbackGame?.golfCompetitors || [];
     const sortedCompetitors = [...competitors].sort((a: any, b: any) => (a.order || 999) - (b.order || 999));
     
-    // FIX: Pinpoint the exact date of the session instead of the overall start of the weekend
     const sessionDateStr = competition?.date || header?.date;
     const eventDate = sessionDateStr ? new Date(sessionDateStr).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '';
     
@@ -146,7 +144,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
 
     return (
       <div className="max-w-5xl mx-auto pb-16 sm:pb-24">
-        <div className="sticky top-0 z-20 bg-transparent pt-6 pb-2">
+        <div className="sticky top-0 z-20 bg-[#000000] pt-6 pb-4 border-b border-gray-800">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <button 
@@ -335,7 +333,7 @@ export const GameDetails = ({ gameId, leagueId, onBack }: GameDetailsProps) => {
 
   return (
     <div className="max-w-4xl mx-auto pb-16 sm:pb-24">
-      <div className="sticky top-0 z-20 bg-transparent pt-6 pb-2">
+      <div className="sticky top-0 z-20 bg-[#000000] pt-6 pb-2">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <button 
