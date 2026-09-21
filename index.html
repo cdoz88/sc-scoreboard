@@ -9,36 +9,25 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     
     <style>
-      /* Safe, standard constraints to prevent iOS Webviews from expanding the width */
-      html, body {
-        width: 100%;
-        max-width: 100%;
-        overflow-x: hidden;
+      body {
         background-color: transparent !important;
         margin: 0;
         padding: 0;
         font-family: 'Inter', sans-serif;
-        -webkit-text-size-adjust: 100%;
       }
-      #root {
-        width: 100%;
-        max-width: 100%;
-        overflow-x: hidden;
-      }
+      html { background-color: transparent !important; }
     </style>
 
     <script>
       window.iFrameResizer = {
         targetOrigin: '*',
-        sizeWidth: false,
         checkOrigin: false,
-        scrolling: false,
-        /* lowestElement waits for the async games to load before calculating height */
+        /* This tells the iframe to accommodate absolutely positioned drop-downs like your calendar! */
         heightCalculationMethod: 'lowestElement' 
       };
     </script>
-    <!-- FIXED 404 ERROR: Swapped dead link for a highly reliable JSDelivr CDN link -->
-    <script defer src="https://cdn.jsdelivr.net/npm/iframe-resizer@4.3.9/js/iframeResizer.contentWindow.min.js"></script>
+    <!-- Restored your original working CDN link. No more 404 errors! -->
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/iframe-resizer/4.3.9/iframeResizer.contentWindow.min.js"></script>
   </head>
   <body class="text-gray-200 antialiased no-scrollbar">
     <div id="root"></div>
