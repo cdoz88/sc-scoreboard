@@ -72,8 +72,6 @@ const fetchNFLScoringPlays = async ({ pageParam }: { pageParam: number }) => {
     });
   }
   
-  // Sort plays by some logic if needed, but usually they are returned in order.
-  // We want newest first, so we reverse.
   return {
     week: pageParam,
     plays: plays.reverse()
@@ -88,7 +86,7 @@ export const FantasyTicker: React.FC<FantasyTickerProps> = ({
 }) => {
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
 
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useInfiniteQuery({
     queryKey: ['nflScoringPlays', currentWeek],
     queryFn: fetchNFLScoringPlays,
     initialPageParam: currentWeek,
@@ -101,28 +99,42 @@ export const FantasyTicker: React.FC<FantasyTickerProps> = ({
     refetchInterval: 60000,
   });
 
-  const slides = useMemo(() => {
-    if (!data) return [{ type: 'intro', text: 'The next week starts soon!' }];
-    
-    let allSlides: any[] = [{ type: 'intro', text: 'The next week starts soon!' }];
-    
-    data.pages.forEach((page, index) => {
-      if (index > 0) {
-        allSlides.push({ type: 'divider', text: `Week ${page.week} Scoring Plays` });
-      }
-      allSlides.push(...page.plays);
-    });
+  // FIX 1: If current week is totally empty, proactively fetch the previous week
+  useEffect(() => {
+    if (data?.pages[0]?.plays.length === 0 && !isFetchingNextPage && hasNextPage) {
+      fetchNextPage();
+    }
+  }, [data, isFetchingNextPage, hasNextPage, fetchNextPage]);
 
-    if (isFetchingNextPage) {
-      allSlides.push({ type: 'loading', text: 'Loading older plays...' });
+  const slides = useMemo(() => {
+    let allSlides: any[] = [];
+    
+    if (data) {
+      data.pages.forEach((page, index) => {
+        // Only push a divider if there are actually plays in this week
+        if (page.plays.length > 0) {
+          if (index > 0 || data.pages[0].plays.length === 0) {
+             allSlides.push({ type: 'divider', text: `Week ${page.week} Scoring Plays` });
+          }
+          allSlides.push(...page.plays);
+        }
+      });
+    }
+
+    if (isLoading || isFetchingNextPage) {
+      allSlides.push({ type: 'loading', text: 'Loading scoring plays...' });
+    }
+
+    // FIX 1: Only show the "starts soon" message if we've completely finished loading and found absolutely zero plays
+    if (!isLoading && !isFetchingNextPage && allSlides.length === 0) {
+      allSlides.push({ type: 'intro', text: 'The next week starts soon!' });
     }
 
     return allSlides;
-  }, [data, isFetchingNextPage]);
+  }, [data, isLoading, isFetchingNextPage]);
 
   const currentSlide = slides[currentSlideIndex];
 
-  // Highlight logic
   useEffect(() => {
     if (!currentSlide || currentSlide.type === 'intro' || currentSlide.type === 'divider' || currentSlide.type === 'loading') {
       onHighlightLeagues(new Set());
@@ -166,11 +178,9 @@ export const FantasyTicker: React.FC<FantasyTickerProps> = ({
     setCurrentSlideIndex(0);
   };
 
-  // Helper to render highlighted text
   const renderHighlightedText = (text: string) => {
     let parts = [{ text, isHighlight: false }];
     
-    // Sort names by length descending to match longer names first (e.g. "Amon-Ra St. Brown" before "Brown")
     const sortedNames = (Array.from(mySyncedPlayerNames) as string[]).sort((a, b) => b.length - a.length);
 
     sortedNames.forEach((fullName: string) => {

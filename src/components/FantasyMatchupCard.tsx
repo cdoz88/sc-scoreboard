@@ -50,7 +50,8 @@ export const FantasyMatchupCard: React.FC<Props> = ({ league, matchups, rosters,
           <img src={platformIconUrl} className="w-4 h-4 object-contain" alt={league.platform || 'Sleeper'} />
           <span className="text-xs font-bold text-gray-400 uppercase tracking-wide truncate">{league.name}</span>
         </div>
-        <span className="text-xs font-black text-[#9df01c] uppercase tracking-wider ml-2 flex-shrink-0">W{week}</span>
+        {/* FIX 2: Replaced W{week} with WEEK {week} */}
+        <span className="text-xs font-black text-[#9df01c] uppercase tracking-wider ml-2 flex-shrink-0">WEEK {week}</span>
       </div>
 
       <div className="space-y-3">

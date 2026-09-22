@@ -268,9 +268,9 @@ export const Fantasy = () => {
 
           <div className="border-t border-gray-800 pt-6">
             <div className="flex flex-col gap-3 mb-6">
-              {/* Force right-justified pill container */}
-              <div className="flex justify-end w-full">
-                <div className="flex items-center justify-start gap-2 text-xs bg-[#222] border border-gray-700 px-3 py-1.5 rounded-lg w-auto max-w-full">
+              {/* FIX 2: Restored standard left alignment for the pill container */}
+              <div>
+                <div className="flex items-center justify-start gap-2 text-xs bg-[#222] border border-gray-700 px-3 py-1.5 rounded-lg w-fit max-w-full">
                   <span className="w-2 h-2 rounded-full bg-[#9df01c] animate-pulse flex-shrink-0"></span>
                   <span className="text-gray-400 flex-shrink-0">Account:</span>
                   {editingAccount ? (
