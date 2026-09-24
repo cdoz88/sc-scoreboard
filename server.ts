@@ -234,7 +234,25 @@ async function startServer() {
 
     const endpoint = req.params[0];
     const queryParams = new URLSearchParams(req.query as any).toString();
-    const url = `https://fantasysports.yahooapis.com/fantasy/v2/${endpoint}${queryParams ? `?${queryParams}` : ''}`;
+    const rawUrl = `https://fantasysports.yahooapis.com/fantasy/v2/${endpoint}${queryParams ? `?${queryParams}` : ''}`;
+
+    // SSRF & Path Traversal Prevention
+    let targetUrl: URL;
+    try {
+      targetUrl = new URL(rawUrl);
+    } catch (e) {
+      return res.status(400).json({ error: 'Invalid URL format' });
+    }
+
+    if (
+      targetUrl.protocol !== 'https:' ||
+      targetUrl.hostname !== 'fantasysports.yahooapis.com' ||
+      !targetUrl.pathname.startsWith('/fantasy/v2/')
+    ) {
+      return res.status(400).json({ error: 'Forbidden API endpoint requested' });
+    }
+
+    const url = targetUrl.toString();
 
     try {
       console.log('Fetching Yahoo API URL:', url);
