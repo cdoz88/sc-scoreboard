@@ -14,9 +14,10 @@ async function startServer() {
   app.use(cors());
   app.use(express.json());
   
-  // Allow iframing from selloutcrowds.com
+  // Allow iframing from selloutcrowds.com, beasellout.com, and any parent/nested/mobile frames
   app.use((req, res, next) => {
-    res.setHeader('Content-Security-Policy', "frame-ancestors 'self' https://selloutcrowds.com https://www.selloutcrowds.com");
+    res.removeHeader('X-Frame-Options');
+    res.setHeader('Content-Security-Policy', "frame-ancestors 'self' https://*.selloutcrowds.com https://selloutcrowds.com https://*.beasellout.com https://beasellout.com https://*.hostingersite.com *");
     next();
   });
   
